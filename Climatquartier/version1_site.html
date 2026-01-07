@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ClimatQuartier - Scénarios climatiques à Cergy</title>
+
+    <!-- ======== FEUILLE DE STYLE PRINCIPALE ======== -->
+    <link rel="stylesheet" href="mise_en_page.css">
+
+    <!-- ======== LEAFLET (Affichage de la carte) ======== -->
+    <link rel="stylesheet" 
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+    <!-- ======== JSZip (pour emballer SHP+SHX+DBF+PRJ) ======== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" defer></script>
+
+    <!-- ======== SHP.JS (import Shapefile → GeoJSON) ======== -->
+    <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js" defer></script>
+
+    <!-- ======== GOOGLE FONTS ======== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap"
+          rel="stylesheet">
+
+    <!-- ======== FICHIER JAVASCRIPT DU SITE (pour appeler PHP) ======== -->
+    <script src="script.js" defer></script>
+
+    <meta name="theme-color" content="#2c7873">
+</head>
+
+
+<body>
+    <!-- ===== EN-TÊTE AVEC NAVIGATION ===== -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <!-- Logo : retourne à la page d'accueil -->
+                <div class="logo" onclick="showPage('accueil')">
+                    <span class="logo-icon">🌍</span>
+                    <h1>ClimatQuartier</h1>
+                </div>
+                <!-- Menu principal -->
+                <nav>
+                    <ul>
+                        <li><a class="nav-link active" data-page="accueil">Accueil</a></li>
+                        <li><a class="nav-link" data-page="apropos">À propos</a></li>
+                        <li><a class="nav-link" data-page="methodologie">Méthodologie</a></li>
+                        <li><a class="nav-link" data-page="contact">Contact</a></li>
+						
+						<li>
+							<button id="theme-toggle" aria-label="Changer de thème">
+								🌙
+							</button>
+						</li>
+						
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== PAGE ACCUEIL ===== -->
+    <div id="accueil" class="page active">
+        <div class="container">
+            <!-- Bandeau principal -->
+            <div class="hero">
+                <h2>Visualisez les scénarios climatiques à l'échelle des quartiers de Cergy</h2>
+                <p>Explorez les impacts du changement climatique sur votre territoire et découvrez les stratégies d'adaptation possibles</p>
+            </div>
+
+            <!-- Fonctionnalités clés -->
+            <section class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Données Précises</h3>
+                    <p>Accédez à des projections climatiques détaillées basées sur les dernières recherches scientifiques</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Cartographie Interactive</h3>
+                    <p>Visualisez l'impact du changement climatique à l'échelle de votre quartier</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Analyse Comparative</h3>
+                    <p>Comparez différents scénarios et leurs conséquences sur votre environnement</p>
+                </div>
+            </section>
+
+            <!-- Appel à l'action -->
+            <section class="cta-section">
+                <h2>Prêt à explorer votre quartier ?</h2>
+                <p>Commencez dès maintenant à analyser les impacts climatiques dans votre zone</p>
+                <button class="btn" onclick="showPage('methodologie')">Découvrir la Méthodologie</button>
+            </section>
+            <!-- ===== TABLEAU DE BORD AVEC SYSTEME D'ONGLETS ===== -->
+            <div class="tabs-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="dashboard">Tableau de bord</div>
+                    <div class="tab" data-tab="scenarios">Scénarios</div>
+                    <div class="tab" data-tab="comparaison">Comparaison</div>
+                    <div class="tab" data-tab="donnees">Données</div>
+                    <div class="tab" data-tab="import">Import de données</div>
+                </div>
+
+                <!-- ===== ONGLET TABLEAU DE BORD ===== -->
+                <div class="tab-content active" id="dashboard">
+                    <h2>Tableau de bord - Visualisation des scénarios climatiques</h2>
+                    <div class="dashboard">
+                        
+                        <!-- ===== CONTRÔLES ===== -->
+                        <div class="controls">
+
+                            <div class="control-group">
+                                <h3>Sélection du quartier</h3>
+                                <select id="quartier-select">
+                                    <option value="">Choisir un quartier</option>
+                                    <option value="centre-ville">Centre-ville de Cergy</option>
+                                    <option value="cergy-st-christophe">Cergy-Saint-Christophe</option>
+                                    <option value="les-linandes">Les Linandes</option>
+                                    <option value="les-hauts-de-cergy">Les Hauts de Cergy</option>
+                                    <option value="axe-majeur">Axe Majeur - Horloge</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <h3>Scénario climatique</h3>
+                                <select id="scenario-select">
+                                    <option value="rcp26">RCP 2.6 (Optimiste)</option>
+                                    <option value="rcp45">RCP 4.5 (Intermédiaire)</option>
+                                    <option value="rcp85">RCP 8.5 (Pessimiste)</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <h3>Horizon temporel</h3>
+                                <select id="horizon-select">
+                                    <option value="2030">2030</option>
+                                    <option value="2050">2050</option>
+                                    <option value="2100">2100</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <h3>Indicateur climatique</h3>
+                                <select id="indicateur-select">
+                                    <option value="temperature">Température moyenne</option>
+                                    <option value="precipitation">Précipitations</option>
+                                    <option value="canicule">Jours de canicule</option>
+                                    <option value="inondation">Risque d'inondation</option>
+                                </select>
+                            </div>
+
+                            <button id="apply-filters">Appliquer les filtres</button>
+                        </div>
+
+                        <!-- ===== VISUALISATION ===== -->
+                        <div class="visualization">
+                            <div class="map-placeholder" id="main-map">
+                                Carte interactive des quartiers de Cergy
+                                <br>
+                                (Visualisation des données climatiques)
+                            </div>
+                            <div class="map-legend">
+                                <small>Légende : 🔵 Faible risque | 🟡 Moyen risque | 🔴 Élevé risque</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== CARTES D'INDICATEURS ===== -->
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h3>Température moyenne</h3>
+                            <div class="data-value">24.5<span class="data-unit">°C</span></div>
+                            <p>Évolution : +2.3°C depuis 2020</p>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>Jours de canicule</h3>
+                            <div class="data-value">18<span class="data-unit">jours</span></div>
+                            <p>Évolution : +7 jours depuis 2020</p>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>Précipitations annuelles</h3>
+                            <div class="data-value">640<span class="data-unit">mm</span></div>
+                            <p>Évolution : -45 mm depuis 2020</p>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>Niveau de risque</h3>
+                            <div class="data-value">Moyen</div>
+                            <p>Augmentation prévue d'ici 2050</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== ONGLET SCENARIOS ===== -->
+                <div class="tab-content" id="scenarios">
+                    <h2>Scénarios climatiques disponibles</h2>
+                    <p>Explorez les différents scénarios climatiques pour les quartiers de Cergy.</p>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h3>RCP 2.6</h3>
+                            <p>Scénario optimiste avec réduction drastique des émissions</p>
+                            <ul>
+                                <li>Augmentation limitée à 1.5°C</li>
+                                <li>Actions climatiques ambitieuses</li>
+                                <li>Adaptation nécessaire mais limitée</li>
+                            </ul>
+                            <button onclick="loadScenario('rcp26')">Explorer ce scénario</button>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>RCP 4.5</h3>
+                            <p>Scénario intermédiaire avec stabilisation des émissions</p>
+                            <ul>
+                                <li>Augmentation d'environ 2.5°C</li>
+                                <li>Actions climatiques modérées</li>
+                                <li>Adaptation significative nécessaire</li>
+                            </ul>
+                            <button onclick="loadScenario('rcp45')">Explorer ce scénario</button>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>RCP 8.5</h3>
+                            <p>Scénario pessimiste avec augmentation continue des émissions</p>
+                            <ul>
+                                <li>Augmentation de plus de 4°C</li>
+                                <li>Peu d'actions climatiques</li>
+                                <li>Adaptation intensive nécessaire</li>
+                            </ul>
+                            <button onclick="loadScenario('rcp85')">Explorer ce scénario</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== ONGLET COMPARAISON ===== -->
+                <div class="tab-content" id="comparaison">
+                    <h2>Comparaison des scénarios</h2>
+                    <p>Comparez l'impact des différents scénarios climatiques sur votre quartier.</p>
+                    
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Indicateur</th>
+                                <th>RCP 2.6</th>
+                                <th>RCP 4.5</th>
+                                <th>RCP 8.5</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Température moyenne en 2050</td>
+                                <td>+1.2°C</td>
+                                <td>+1.8°C</td>
+                                <td>+2.5°C</td>
+                            </tr>
+                            <tr>
+                                <td>Jours de canicule par an</td>
+                                <td>12</td>
+                                <td>18</td>
+                                <td>26</td>
+                            </tr>
+                            <tr>
+                                <td>Précipitations annuelles</td>
+                                <td>-5%</td>
+                                <td>-8%</td>
+                                <td>-12%</td>
+                            </tr>
+                            <tr>
+                                <td>Risque d'inondation</td>
+                                <td>Faible</td>
+                                <td>Moyen</td>
+                                <td>Élevé</td>
+                            </tr>
+                            <tr>
+                                <td>Impact sur la biodiversité</td>
+                                <td>Modéré</td>
+                                <td>Significatif</td>
+                                <td>Sévère</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ===== ONGLET DONNEES ===== -->
+                <div class="tab-content" id="donnees">
+                    <h2>Données et méthodologie</h2>
+                    <p>Informations sur les sources de données et la méthodologie utilisée.</p>
+                    
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <h3>Sources de données</h3>
+                            <ul>
+                                <li>Météo France - Données historiques</li>
+                                <li>GIEC - Scénarios climatiques</li>
+                                <li>Grand Paris - Données urbaines</li>
+                                <li>OpenData Cergy - Cartographie</li>
+                            </ul>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>Méthodologie</h3>
+                            <p>Notre approche combine :</p>
+                            <ul>
+                                <li>Modélisation climatique régionale</li>
+                                <li>Analyse de vulnérabilité urbaine</li>
+                                <li>Projections statistiques</li>
+                                <li>Validation par experts</li>
+                            </ul>
+                        </div>
+
+                        <div class="data-card">
+                            <h3>Téléchargement</h3>
+                            <p>Accédez aux données brutes :</p>
+                            <button onclick="downloadData('csv')">Télécharger CSV</button>
+                            <button onclick="downloadData('json')">Télécharger JSON</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== ONGLET IMPORT DE DONNEES ===== -->
+                <div class="tab-content" id="import">
+                    <h2>Import de vos données géographiques</h2>
+                    <p>Importez vos propres shapefiles pour visualiser vos données sur la carte.</p>
+                    
+                    <div class="visualization">
+                        <div class="map-placeholder" id="import-map">
+                            Carte pour visualisation des données importées
+                            <br>(Zone d'affichage des shapefiles)
+                        </div>
+                <!-- ========== GESTION des COUCHES ========== -->
+                <div class="data-card" style="margin-top: 1.5rem;">
+                    <h3>Gestion des couches</h3>
+                    <div id="layer-list">Aucune couche importée</div>
+                </div>
+
+                        <div class="import-section">
+                            <h4>Importer des fichiers Shapefile</h4>
+                            <div class="file-input-container">
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="shapefile-upload" accept=".shp,.shx,.dbf,.prj" multiple>
+                                    <label for="shapefile-upload" class="file-input-label">
+                                        📁 Choisir les fichiers Shapefile (.shp, .shx, .dbf, .prj)
+                                    </label>
+                                </div>
+                                <div class="file-info" id="file-info">Aucun fichier sélectionné</div>
+
+                                <button class="upload-btn" onclick="uploadShapefile()">
+                                    📤 Importer et Visualiser
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="import-section">
+                            <h4>Importer des données CSV avec coordonnées</h4>
+                            <div class="file-input-container">
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="csv-upload" accept=".csv">
+                                    <label for="csv-upload" class="file-input-label">
+                                        📊 Choisir un fichier CSV avec coordonnées
+                                    </label>
+                                </div>
+                                <div class="file-info" id="csv-file-info">Aucun fichier CSV sélectionné</div>
+
+                                <button class="upload-btn" onclick="uploadCSV()">
+                                    📤 Importer et Visualiser
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="data-grid" style="margin-top: 2rem;">
+                            <div class="data-card">
+                                <h3>Données Importées</h3>
+                                <div id="import-stats"><p>Aucune donnée importée</p></div>
+                                <button onclick="clearImportedData()" style="background: var(--danger-color);">
+                                    🗑️ Effacer les données
+                                </button>
+                            </div>
+
+                            <div class="data-card">
+                                <h3>Options de Visualisation</h3>
+                                <select id="visualization-style">
+                                    <option value="choropleth">Carte choroplèthe</option>
+                                    <option value="points">Points</option>
+                                    <option value="heatmap">Carte de chaleur</option>
+                                </select>
+
+                                <select id="color-scheme">
+                                    <option value="reds">Échelle de rouges</option>
+                                    <option value="blues">Échelle de bleus</option>
+                                    <option value="greens">Échelle de verts</option>
+                                </select>
+
+                                <button onclick="applyVisualization()">Appliquer la visualisation</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- fermeture tabs-container -->
+        </div>
+    </div>
+
+    <!-- ===== PAGE A PROPOS ===== -->
+    <div id="apropos" class="page">
+        <div class="container">
+            <div class="hero">
+                <h2>À Propos de ClimatQuartier</h2>
+                <p>Découvrez notre mission, notre équipe et notre vision pour un futur résilient</p>
+            </div>
+
+            <section class="content-section">
+                <h3>Notre Mission</h3>
+                <p>ClimatQuartier est une plateforme innovante dédiée à la visualisation et à l'analyse des impacts du changement climatique à l'échelle locale. Notre mission est de rendre accessibles les données climatiques complexes pour permettre aux citoyens, aux décideurs et aux acteurs locaux de comprendre les enjeux et de prendre des décisions éclairées.</p>
+                
+                <p>Nous croyons que la lutte contre le changement climatique commence par une compréhension fine de ses impacts locaux. En fournissant des outils de visualisation intuitifs et des données scientifiquement validées, nous contribuons à bâtir des communautés plus résilientes et mieux préparées aux défis climatiques à venir.</p>
+            </section>
+
+            <section class="content-section">
+                <h3>Notre Histoire</h3>
+                <p>Fondé en 2023, ClimatQuartier est né de la collaboration entre des chercheurs en climatologie, des data scientists et des experts en urbanisme. Constatant le fossé entre les données scientifiques complexes et leur compréhension par le grand public, notre équipe s'est donnée pour objectif de créer des outils de visualisation accessibles et pédagogiques.</p>
+                
+                <p>Notre projet a débuté avec la ville de Cergy, servant de territoire pilote pour développer et affiner nos méthodologies. Aujourd'hui, nous travaillons à étendre notre couverture à d'autres territoires tout en continuant d'améliorer nos modèles et nos interfaces.</p>
+            </section>
+
+            <section class="content-section">
+                <h3>Nos Valeurs</h3>
+                <div class="values-grid">
+                    <div class="value-card">
+                        <div class="value-icon">🔬</div>
+                        <h4>Rigueur Scientifique</h4>
+                        <p>Nos données sont basées sur les recherches les plus récentes et validées par des experts</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🌱</div>
+                        <h4>Accessibilité</h4>
+                        <p>Nous rendons les données climatiques compréhensibles pour tous les publics</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🤝</div>
+                        <h4>Collaboration</h4>
+                        <p>Nous travaillons main dans la main avec les communautés locales et les institutions</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🚀</div>
+                        <h4>Innovation</h4>
+                        <p>Nous développons constamment de nouvelles approches pour visualiser les données climatiques</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h3>Notre Équipe</h3>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🔬</div>
+                        <h4>Tya Rambault De BARALLON </h4>
+                        <p>Chargé de projet</p>
+                        <small>15 ans d'expérience en modélisation climatique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👩‍💻</div>
+                        <h4>Ambroise DANGUY</h4>
+                        <p>Chargé de projet</p>
+                        <small>Expert en visualisation de données environnementales</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Doriane Martins RIBEIRO</h4>
+                        <p>Chargée de projet</p>
+                        <small>Spécialiste en communication scientifique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Lucas DEVANCOURT</h4>
+                        <p>Chargée de projet</p>
+                        <small>Spécialiste en communication scientifique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Gloire MBAMBA</h4>
+                        <p>Chargé de projet</p>
+                        <small>Création d'interfaces utilisateur intuitives</small>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+<!-- ===== PAGE METHODOLOGIE ===== -->
+<!-- ===== PAGE METHODOLOGIE ===== -->
+<div id="methodologie" class="page">
+
+    <!-- ===== ONGLET DOCUMENTATION ===== -->
+    <div class="method-tabs">
+        <div class="method-tab active" data-tab="method-content">Méthodologie</div>
+        <div class="method-tab" data-tab="doc-content">Documentation</div>
+    </div>
+
+    <!-- ===== CONTENU : MÉTHODOLOGIE ===== -->
+    <div class="method-tab-content active" id="method-content">
+        <div class="container">
+            <div class="hero">
+                <h2>Notre Méthodologie</h2>
+                <p>Découvrez comment nous produisons et analysons les données climatiques</p>
+            </div>
+
+            <section class="methodology-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Collecte des Données</h3>
+                        <p>Nous rassemblons des données climatiques historiques provenant de sources fiables...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Modélisation Climatique</h3>
+                        <p>Nous utilisons des modèles climatiques régionaux (RCMs)...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Analyse des Scénarios</h3>
+                        <p>Nous appliquons différents scénarios d'émissions (RCP 2.6, 4.5, 8.5)...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Validation et Incertitudes</h3>
+                        <p>Chaque projection est soumise à une validation rigoureuse...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Visualisation et Communication</h3>
+                        <p>Nous transformons les données complexes en visualisations accessibles...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h3>Sources de Données</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <h4>Données Climatiques</h4>
+                        <ul>
+                            <li>Météo France</li>
+                            <li>Copernicus</li>
+                            <li>NASA POWER</li>
+                        </ul>
+                    </div>
+                    <div class="data-card">
+                        <h4>Données Urbaines</h4>
+                        <ul>
+                            <li>IGN</li>
+                            <li>OpenStreetMap</li>
+                            <li>Données cadastrales</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ===== CONTENU : DOCUMENTATION ===== -->
+<!-- ====================== ONGLET DOCUMENTATION ====================== -->
+    <div class="method-tab-content" id="doc-content">
+        <div class="container documentation-container">
+
+            <h3>📚 Documentation du projet</h3>
+            <p>Importez, consultez, téléchargez et organisez les documents liés au projet ClimatQuartier.</p>
+
+            <!-- 🔥 Upload Document -->
+            <div class="doc-upload-box">
+                <h4>📤 Importer un document</h4>
+                <input type="file" id="doc-upload-input" />
+                <button onclick="uploadDocument()">Ajouter</button>
+            </div>
+
+            <hr>
+
+            <!-- 🔍 Barre de recherche -->
+            <input type="text" id="doc-search" placeholder="🔍 Rechercher un document..." oninput="filterDocuments()">
+
+            <!-- 📂 Catégories -->
+            <div class="doc-categories">
+                <button class="doc-cat active" data-cat="all" onclick="filterCategory('all')">Tous</button>
+                <button class="doc-cat" data-cat="rapports" onclick="filterCategory('rapports')">Rapports</button>
+                <button class="doc-cat" data-cat="guides" onclick="filterCategory('guides')">Guides</button>
+                <button class="doc-cat" data-cat="data" onclick="filterCategory('data')">Données</button>
+                <button class="doc-cat" data-cat="scripts" onclick="filterCategory('scripts')">Scripts</button>
+                <button class="doc-cat" data-cat="images" onclick="filterCategory('images')">Images</button>
+            </div>
+
+            <!-- 📥 Export ZIP -->
+            <button class="btn" style="margin-top:15px;" onclick="exportDocumentsZIP()">📦 Exporter tous les documents</button>
+
+            <hr>
+
+            <!-- 📁 Liste des documents -->
+            <h3>📁 Liste des documents</h3>
+            <div id="doc-list" class="doc-grid">
+                <!-- Généré dynamiquement -->
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+
+
+        <!-- === CONTENU DE L’ONGLET DOCUMENTATION === -->
+        <div class="method-tab-content" id="doc-content">
+
+            <h3>Documentation du Projet</h3>
+            <p>Retrouvez ici tous les documents officiels relatifs au projet ClimatQuartier.</p>
+
+            <div class="doc-grid">
+
+                <div class="doc-card">
+                    <h4>Guides & Rapports</h4>
+                    <ul>
+                        <li><a href="docs/rapport_final.pdf" target="_blank">📄 Rapport Final</a></li>
+                        <li><a href="docs/guide_technique.pdf" target="_blank">📘 Guide Technique</a></li>
+                        <li><a href="docs/specifications.pdf" target="_blank">📝 Cahier des Charges</a></li>
+                    </ul>
+                </div>
+
+                <div class="doc-card">
+                    <h4>Données & Scripts</h4>
+                    <ul>
+                        <li><a href="docs/donnees.zip" target="_blank">🗂️ Données brutes (ZIP)</a></li>
+                        <li><a href="docs/modeles.csv" target="_blank">📊 Modèles climatiques (CSV)</a></li>
+                        <li><a href="docs/fonctions.js" target="_blank">💻 Scripts JS</a></li>
+                    </ul>
+                </div>
+
+                <div class="doc-card">
+                    <h4>Ressources externes</h4>
+                    <ul>
+                        <li><a href="https://www.meteofrance.com" target="_blank">🌦️ Météo France</a></li>
+                        <li><a href="https://www.ipcc.ch" target="_blank">🌍 GIEC – IPCC</a></li>
+                        <li><a href="https://data.cergy.fr" target="_blank">📡 OpenData Cergy</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+    <!-- ===== PAGE CONTACT ===== -->
+    <div id="contact" class="page">
+        <div class="container">
+            <div class="hero">
+                <h2>Contactez-nous</h2>
+                <p>Une question ? Un projet ? Nous sommes à votre écoute</p>
+            </div>
+
+            <div class="contact-grid">
+
+                <!-- Formulaire -->
+                <section class="contact-form">
+                    <h3>Envoyez-nous un message</h3>
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Nom complet</label>
+                            <input type="text" id="name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Adresse email</label>
+                            <input type="email" id="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">Sujet</label>
+                            <select id="subject" required>
+                                <option value="">Choisir un sujet</option>
+                                <option value="question">Question générale</option>
+                                <option value="partnership">Partenariat</option>
+                                <option value="data">Demande de données</option>
+                                <option value="technical">Problème technique</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                        <h2>Ajouter un utilisateur</h2>
+                            <input type="text" id="name" placeholder="Nom">
+                            <input type="email" id="email" placeholder="Email">
+                            <button onclick="addUser()">Ajouter</button>
+
+                            <h2>Liste des utilisateurs</h2>
+                            <div id="usersList"></div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" rows="6" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn">Envoyer le message</button>
+                    </form>
+                </section>
+
+                <!-- Infos -->
+                <section class="content-section">
+                    <h3>Nos coordonnées</h3>
+
+                    <div class="info-item">
+                        <div class="info-icon">📍</div>
+                        <div class="info-content">
+                            <h4>Adresse</h4>
+                            <p>Université de Cergy-Pontoise...</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">📞</div>
+                        <div class="info-content">
+                            <h4>Téléphone</h4>
+                            <p>+33 1 34 25 60 00</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">✉️</div>
+                        <div class="info-content">
+                            <h4>Email</h4>
+                            <p>contact@climatquartier.fr</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo" onclick="showPage('accueil')">
+                    <span class="logo-icon">🌍</span>
+                    <h2>ClimatQuartier</h2>
+                </div>
+
+                <div class="footer-links">
+                    <a>Mentions légales</a>
+                    <a>Politique de confidentialité</a>
+                    <a onclick="showPage('contact')" style="cursor:pointer;">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- ========== TABLE ATTRIBUTAIRE (MODAL) ========== -->
+<div id="attribute-table" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAttributeTable()">&times;</span>
+        <h3>Table attributaire</h3>
+        <div id="attribute-content"></div>
+    </div>
+</div>
+
+
+    <!-- ===== FICHIER JS EXTERNE ===== -->
+    <script src="javaScript.js"></script>
+
+</body>
+</html>
