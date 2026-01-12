@@ -1436,17 +1436,17 @@ footer {
 
 /* 2. Variables Sombres - Activées quand l'attribut data-theme="dark" est présent */
 [data-theme="dark"] {
-    /* On inverse les rôles des couleurs de fond et de texte */
-    --light-color: #1e1e1e;       /* Fond des blocs secondaires */
-    --dark-color: #ecf0f1;        /* Couleur du texte principal (clair) */
-    --white: #2d3436;             /* Remplace le blanc pur par un gris foncé */
-    
-    /* On ajuste les couleurs primaires pour qu'elles "pettent" mieux sur du noir */
-    --primary-color: #4db6ac;     /* Un vert plus lumineux/pastel */
-    --secondary-color: #2c7873;   /* L'ancienne couleur primaire devient secondaire */
-    --accent-color: #80cbc4;      /* Accent très clair */
+    /* COULEUR UTILISATEUR : #2B748C (Bleu Pétrole) */
+    --primary-color: #2B748C;     /* Ton choix exact */
+    --secondary-color: #4da3bd;   /* Une version plus claire pour les survols/boutons */
+    --accent-color: #1a4f61;      /* Une version plus sombre pour le début du dégradé */
 
-    --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Ombres plus fortes */
+    /* FOND & TEXTE (Gris anthracite et noir profond) */
+    --light-color: #121212;       
+    --dark-color: #e0e0e0;        
+    --white: #1e1e1e;             
+
+    --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
 /* 3. Surcharges spécifiques pour le mode sombre */
@@ -1497,10 +1497,6 @@ footer {
 }
 /* Note : on inverse les couleurs pour simuler une carte sombre sans changer de fournisseur */
 
-/* ================================================================
-   CORRECTIFS SPÉCIFIQUES DARK MODE
-   (À ajouter à la toute fin du fichier CSS)
-   ================================================================ */
 
 /* 1. Correction du Footer (Pied de page)
    Le footer utilisait la couleur sombre inversée (qui devenait claire).
@@ -1565,10 +1561,6 @@ footer {
 [data-theme="dark"] button {
     color: white;
 }
-/* ================================================================
-   CORRECTIF FINAL : BOUTONS ILLISIBLES
-   (À coller à la toute fin du fichier CSS)
-   ================================================================ */
 
 /* 1. On cible TOUS les types de boutons pour forcer la couleur en mode sombre */
 [data-theme="dark"] button,
@@ -1612,4 +1604,5 @@ footer {
 [data-theme="dark"] .data-card button:hover,
 [data-theme="dark"] .visualization button:hover {
     background-color: var(--primary-color) !important; /* Devient vert au survol */
+
 }
