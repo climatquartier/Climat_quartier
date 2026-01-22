@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ClimatQuartier - Scénarios climatiques à Cergy</title>
+
+    <!-- ======== FEUILLE DE STYLE PRINCIPALE ======== -->
+    <link rel="stylesheet" href="mise_en_page.css">
+
+    <!-- ======== LEAFLET (Affichage de la carte) ======== -->
+    <link rel="stylesheet" 
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+    <!-- ======== JSZip (pour emballer SHP+SHX+DBF+PRJ) ======== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" defer></script>
+
+    <!-- ======== SHP.JS (import Shapefile → GeoJSON) ======== -->
+    <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js" defer></script>
+
+    <!-- ======== GOOGLE FONTS ======== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap"
+          rel="stylesheet">
+
+    <!-- ======== FICHIER JAVASCRIPT DU SITE (pour appeler PHP) ======== -->
+    <script src="script.js" defer></script>
+
+    <meta name="theme-color" content="#2c7873">
+	
+    <!-- ======== EmailJS pour receptionner les emails du formulaire de contact ======== -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("Grel3CSlF3MfGOYG8");
+       })();
+    </script>
+	
+</head>
+
+
+<body>
+    <!-- ===== EN-TÊTE AVEC NAVIGATION ===== -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <!-- Logo : retourne à la page d'accueil -->
+                <div class="logo" onclick="showPage('accueil')">
+                    <span class="logo-icon">🌍</span>
+                    <h1>ClimatQuartier</h1>
+                </div>
+                <!-- Menu principal -->
+                <nav>
+                    <ul>
+                        <li><a class="nav-link active" data-page="accueil">Accueil</a></li>
+                        <li><a class="nav-link" data-page="apropos">À propos</a></li>
+						<li><a class="nav-link" data-page="cartographie">Cartographie</a></li>
+                        <li><a class="nav-link" data-page="methodologie">Méthodologie</a></li>
+                        <li><a class="nav-link" data-page="contact">Contact</a></li>
+						
+						<li>
+							<button id="theme-toggle" aria-label="Changer de thème">
+								🌙
+							</button>
+						</li>
+						
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== PAGE ACCUEIL ===== -->
+    <div id="accueil" class="page active">
+        <div class="container">
+            <!-- Bandeau principal -->
+            <div class="hero">
+                <h2>Visualisez les scénarios climatiques à l'échelle de votre ville</h2>
+                <p>Explorez les impacts du changement climatique sur votre territoire et découvrez les stratégies d'adaptation possibles</p>
+            </div>
+
+            <!-- Fonctionnalités clés -->
+            <section class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Données Précises</h3>
+                    <p>Accédez à des projections climatiques détaillées basées sur les dernières recherches scientifiques</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Cartographie Interactive</h3>
+                    <p>Visualisez l'impact du changement climatique à l'échelle de votre quartier</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Analyse Comparative</h3>
+                    <p>Comparez différents scénarios et leurs conséquences sur votre environnement</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛠️</div>
+                    <h3>Simulation d'actions</h3>
+                    <p>Simulez diverses actions et visualisez leurs conséquences sur votre environnement</p>
+                </div>
+            </section>
+
+            <!-- Appel à l'action -->
+            <section class="cta-section">
+                <h2>Prêt à changer votre quartier ?</h2>
+                <p>Commencez dès maintenant à analyser les impacts climatiques dans votre zone</p>
+                <button class="btn" onclick="showPage('cartographie')">Découvrir la cartographie interactive</button>
+            </section>
+
+            </div> <!-- fermeture tabs-container -->
+        </div>
+    </div>
+
+    <!-- ===== PAGE A PROPOS ===== -->
+    <div id="apropos" class="page">
+        <div class="container">
+            <div class="hero">
+                <h2>À Propos de ClimatQuartier</h2>
+                <p>Découvrez notre mission, notre équipe et notre vision pour un futur résilient</p>
+            </div>
+
+            <section class="content-section">
+                <h3>Notre Mission</h3>
+                <p>ClimatQuartier est une plateforme innovante dédiée à la visualisation et à l'analyse des impacts du changement climatique à l'échelle locale. Notre mission est de rendre accessibles les données climatiques complexes pour permettre aux citoyens, aux décideurs et aux acteurs locaux de comprendre les enjeux et de prendre des décisions éclairées.</p>
+                
+                <p>Nous croyons que la lutte contre le changement climatique commence par une compréhension fine de ses impacts locaux. En fournissant des outils de visualisation intuitifs et des données scientifiquement validées, nous contribuons à bâtir des communautés plus résilientes et mieux préparées aux défis climatiques à venir.</p>
+            </section>
+
+            <section class="content-section">
+                <h3>Notre Histoire</h3>
+                <p>Fondé en 2023, ClimatQuartier est né de la collaboration entre des chercheurs en climatologie, des data scientists et des experts en urbanisme. Constatant le fossé entre les données scientifiques complexes et leur compréhension par le grand public, notre équipe s'est donnée pour objectif de créer des outils de visualisation accessibles et pédagogiques.</p>
+                
+                <p>Notre projet a débuté avec la ville de Cergy, servant de territoire pilote pour développer et affiner nos méthodologies. Aujourd'hui, nous travaillons à étendre notre couverture à d'autres territoires tout en continuant d'améliorer nos modèles et nos interfaces.</p>
+            </section>
+
+            <section class="content-section">
+                <h3>Nos Valeurs</h3>
+                <div class="values-grid">
+                    <div class="value-card">
+                        <div class="value-icon">🔬</div>
+                        <h4>Rigueur Scientifique</h4>
+                        <p>Nos données sont basées sur les recherches les plus récentes et validées par des experts</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🌱</div>
+                        <h4>Accessibilité</h4>
+                        <p>Nous rendons les données climatiques compréhensibles pour tous les publics</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🤝</div>
+                        <h4>Collaboration</h4>
+                        <p>Nous travaillons main dans la main avec les communautés locales et les institutions</p>
+                    </div>
+                    <div class="value-card">
+                        <div class="value-icon">🚀</div>
+                        <h4>Innovation</h4>
+                        <p>Nous développons constamment de nouvelles approches pour visualiser les données climatiques</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h3>Notre Équipe</h3>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🔬</div>
+                        <h4>Tya Rambault De BARALLON </h4>
+                        <p>Chargé de projet</p>
+                        <small>15 ans d'expérience en modélisation climatique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👩‍💻</div>
+                        <h4>Ambroise DANGUY</h4>
+                        <p>Chargé de projet</p>
+                        <small>Expert en visualisation de données environnementales</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Doriane Martins RIBEIRO</h4>
+                        <p>Chargée de projet</p>
+                        <small>Spécialiste en communication scientifique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Lucas DEVANCOURT</h4>
+                        <p>Chargée de projet</p>
+                        <small>Spécialiste en communication scientifique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Gloire MBAMBA</h4>
+                        <p>Chargé de projet</p>
+                        <small>Création d'interfaces utilisateur intuitives</small>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+<!-- ===== PAGE METHODOLOGIE ===== -->
+<div id="methodologie" class="page">
+
+    <!-- ===== ONGLET DOCUMENTATION ===== -->
+    <div class="method-tabs">
+        <div class="method-tab active" data-tab="method-content">Méthodologie</div>
+        <div class="method-tab" data-tab="doc-content">Documentation</div>
+    </div>
+
+    <!-- ===== CONTENU : MÉTHODOLOGIE ===== -->
+    <div class="method-tab-content active" id="method-content">
+        <div class="container">
+            <div class="hero">
+                <h2>Notre Méthodologie</h2>
+                <p>Découvrez comment nous produisons et analysons les données climatiques</p>
+            </div>
+
+            <section class="methodology-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Collecte des Données</h3>
+                        <p>Nous rassemblons des données climatiques historiques provenant de sources fiables...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Modélisation Climatique</h3>
+                        <p>Nous utilisons des modèles climatiques régionaux (RCMs)...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Analyse des Scénarios</h3>
+                        <p>Nous appliquons différents scénarios d'émissions (RCP 2.6, 4.5, 8.5)...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Validation et Incertitudes</h3>
+                        <p>Chaque projection est soumise à une validation rigoureuse...</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Visualisation et Communication</h3>
+                        <p>Nous transformons les données complexes en visualisations accessibles...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h3>Sources de Données</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <h4>Données Climatiques</h4>
+                        <ul>
+                            <li>Météo France</li>
+                            <li>Copernicus</li>
+                            <li>NASA POWER</li>
+                        </ul>
+                    </div>
+                    <div class="data-card">
+                        <h4>Données Urbaines</h4>
+                        <ul>
+                            <li>IGN</li>
+                            <li>OpenStreetMap</li>
+                            <li>Données cadastrales</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+	
+<!-- ====================== ONGLET CARTOGRAPHIE ====================== -->
+	<div id="cartographie" class="page">
+			<div class="container" style="max-width: 100%; padding: 0;">
+				
+				<div class="hero" style="margin: 2rem;">
+					<h2>Cartographie Interactive</h2>
+					<p>Explorez les données climatiques dynamiques de votre territoire.</p>
+				</div>
+
+				<div id="map-integration-zone" style="height: 80vh; background-color: #eee; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc; margin: 2rem;">
+					
+					<div style="text-align: center; color: #666;">
+						<h3>🚧 Zone d'intégration de la carte</h3>
+						<p>Votre collègue devra remplacer cette DIV par son code (Iframe ou Div Leaflet).</p>
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+
+    <!-- ===== CONTENU : DOCUMENTATION ===== -->
+<!-- ====================== ONGLET DOCUMENTATION ====================== -->
+    <div class="method-tab-content" id="doc-content">
+        <div class="container documentation-container">
+
+        </div>
+    </div>
+
+
+</div>
+
+
+        <!-- === CONTENU DE L’ONGLET DOCUMENTATION === -->
+        <div class="method-tab-content" id="doc-content">
+
+
+        </div>
+
+    </div>
+</div>
+
+
+
+    <!-- ===== PAGE CONTACT ===== -->
+    <div id="contact" class="page">
+        <div class="container">
+            <div class="hero">
+                <h2>Contactez-nous</h2>
+                <p>Une question ? Un projet ? Nous sommes à votre écoute !</p>
+            </div>
+
+            <div class="contact-grid">
+
+                <!-- Formulaire -->
+                <section class="contact-form">
+                    <h3>Envoyez-nous un message</h3>
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="name">Nom complet</label>
+                            <input type="text" id="contact_name" name="from_name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Adresse email</label>
+                            <input type="email" id="contact_email" name="from_email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">Sujet</label>
+                            <select id="subject" name="subject" required>
+                                <option value="">Choisir un sujet</option>
+                                <option value="question">Question générale</option>
+                                <option value="partnership">Partenariat</option>
+                                <option value="data">Demande de données</option>
+                                <option value="technical">Problème technique</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="6" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn" id="btn-submit">Envoyer le message</button>
+                    </form>
+                </section>
+
+                <!-- Infos -->
+                <section class="content-section">
+                    <h3>Nos coordonnées</h3>
+
+                    <div class="info-item">
+                        <div class="info-icon">📍</div>
+                        <div class="info-content">
+                            <h4>Adresse</h4>
+                            <p>CY Cergy Paris Université</p>
+							<p>33 Boulevard du Port, 95000 Cergy</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">📞</div>
+                        <div class="info-content">
+                            <h4>Téléphone</h4>
+                            <p>+33 1 34 25 60 00</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">✉️</div>
+                        <div class="info-content">
+                            <h4>Email</h4>
+                            <p>climatquartier@hotmail.com</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo" onclick="showPage('accueil')">
+                    <span class="logo-icon">🌍</span>
+                    <h2>ClimatQuartier</h2>
+                </div>
+
+                <div class="footer-links">
+                    <a>Mentions légales</a>
+                    <a>Politique de confidentialité</a>
+                    <a onclick="showPage('contact')" style="cursor:pointer;">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- ========== TABLE ATTRIBUTAIRE (MODAL) ========== -->
+<div id="attribute-table" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAttributeTable()">&times;</span>
+        <h3>Table attributaire</h3>
+        <div id="attribute-content"></div>
+    </div>
+</div>
+
+
+    <!-- ===== FICHIER JS EXTERNE ===== -->
+    <script src="javaScript.js"></script>
+
+</body>
+</html>
