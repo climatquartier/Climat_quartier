@@ -86,6 +86,7 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
         }
 
         .scenario-tab:hover {
@@ -96,6 +97,77 @@
             background: white;
             color: var(--primary);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Tooltips pour les scénarios */
+        .tooltip-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .tooltip-icon {
+            font-size: 0.75rem;
+            cursor: help;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            margin-left: 0.25rem;
+        }
+
+        .tooltip-icon:hover {
+            opacity: 1;
+        }
+
+        .tooltip-content {
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.95);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .tooltip-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: rgba(30, 41, 59, 0.95);
+        }
+
+        .tooltip-wrapper:hover .tooltip-content {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .tooltip-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tooltip-link:hover {
+            color: #93c5fd;
+            text-decoration: underline;
         }
 
         /* Layout principal */
@@ -238,12 +310,41 @@
             cursor: pointer;
             text-align: center;
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .scenario-option.active {
             border-color: var(--primary);
             background: var(--primary);
             color: white;
+        }
+
+        .scenario-option .tooltip-wrapper {
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        .scenario-option .tooltip-icon {
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        .scenario-option .tooltip-content {
+            bottom: auto;
+            top: 100%;
+            white-space: normal;
+            width: 200px;
+            font-size: 0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 0.5rem;
+        }
+
+        .scenario-option .tooltip-content::after {
+            top: auto;
+            bottom: 100%;
+            border-top-color: transparent;
+            border-bottom-color: rgba(30, 41, 59, 0.95);
         }
 
         .action-buttons {
