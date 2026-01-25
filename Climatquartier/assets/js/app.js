@@ -20,6 +20,8 @@ class ClimatQuartierApp {
         this.communeLayers = {};
         this.baseLayers = {};
         this.currentBasemap = 'osm';
+        this.vegetationLayerActive = false;
+        this.impermeabilityLayerActive = false;
 
         this.init();
     }
@@ -178,10 +180,108 @@ class ClimatQuartierApp {
                 }
             }
 
+            toggleVegetationLayer(button) {
+                // Récupérer le bouton toggle
+                const btn = document.getElementById('vegToggle');
+
+                // Ajouter une classe de style pour la couche végétation
+                if (!this.vegetationLayerActive) {
+                    // Activer l'affichage avec coloration selon végétation
+                    for (const communeId of Object.keys(this.communeLayers)) {
+                        const layer = this.communeLayers[communeId];
+                        if (this.map.hasLayer(layer)) {
+                            layer.setStyle(feature => {
+                                return {
+                                    fillOpacity: 0.6,
+                                    color: this.getVegetationColor(feature.properties.vegetation || 0)
+                                };
+                            });
+                        }
+                    }
+                    this.vegetationLayerActive = true;
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="fas fa-toggle-on"></i>';
+                    console.log('Couche Végétation activée');
+                } else {
+                    // Désactiver - revenir aux couleurs communes
+                    for (const communeId of Object.keys(this.communesConfig)) {
+                        const layer = this.communeLayers[communeId];
+                        if (layer) {
+                            layer.setStyle({
+                                fillColor: this.communesConfig[communeId].color,
+                                fillOpacity: 0.5
+                            });
+                        }
+                    }
+                    this.vegetationLayerActive = false;
+                    btn.classList.remove('active');
+                    btn.innerHTML = '<i class="fas fa-toggle-off"></i>';
+                    console.log('Couche Végétation désactivée');
+                }
+            }
+
+            toggleImpermeabilityLayer(button) {
+                // Récupérer le bouton toggle
+                const btn = document.getElementById('imperToggle');
+
+                // Ajouter une classe de style pour la couche imperméabilité
+                if (!this.impermeabilityLayerActive) {
+                    // Activer l'affichage avec coloration selon imperméabilité
+                    for (const communeId of Object.keys(this.communeLayers)) {
+                        const layer = this.communeLayers[communeId];
+                        if (this.map.hasLayer(layer)) {
+                            layer.setStyle(feature => {
+                                return {
+                                    fillOpacity: 0.6,
+                                    color: this.getImpermeabilityColor(feature.properties.impermeability || 0)
+                                };
+                            });
+                        }
+                    }
+                    this.impermeabilityLayerActive = true;
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="fas fa-toggle-on"></i>';
+                    console.log('Couche Désimperméabilisation activée');
+                } else {
+                    // Désactiver - revenir aux couleurs communes
+                    for (const communeId of Object.keys(this.communesConfig)) {
+                        const layer = this.communeLayers[communeId];
+                        if (layer) {
+                            layer.setStyle({
+                                fillColor: this.communesConfig[communeId].color,
+                                fillOpacity: 0.5
+                            });
+                        }
+                    }
+                    this.impermeabilityLayerActive = false;
+                    btn.classList.remove('active');
+                    btn.innerHTML = '<i class="fas fa-toggle-off"></i>';
+                    console.log('Couche Désimperméabilisation désactivée');
+                }
+            }
+
+            getVegetationColor(vegetationPercent) {
+                if (vegetationPercent > 40) return '#16a34a';  // Vert foncé
+                if (vegetationPercent > 30) return '#22c55e';  // Vert moyen
+                if (vegetationPercent > 20) return '#86efac';  // Vert clair
+                return '#e8f5e9';  // Très clair
+            }
+
+            getImpermeabilityColor(impermeability) {
+                // Coloration basée sur le taux d'imperméabilité (inverse de la perméabilité)
+                if (impermeability < 20) return '#4ade80';      // Vert - très perméable
+                if (impermeability < 40) return '#fbbf24';      // Orange - semi-perméable
+                if (impermeability < 60) return '#f97316';      // Orange foncé - peu perméable
+                return '#ef4444';  // Rouge - imperméable
+            }
+
             changeBasemap(basemapType) {
-                // Mettre à jour les boutons
-                const basemapButtons = document.querySelectorAll('.basemap-controls .toggle-btn');
+                // Mettre à jour les boutons - cherche dans la section Fond de carte
+                const basemapSection = document.querySelector('.layer-controls .collapsible-section:nth-child(2)');
+                const basemapButtons = basemapSection.querySelectorAll('.toggle-btn');
                 basemapButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Ajouter la classe active au bouton cliqué
                 event.target.classList.add('active');
                 
                 // Changer la couche de base
