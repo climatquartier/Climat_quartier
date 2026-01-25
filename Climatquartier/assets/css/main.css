@@ -504,6 +504,170 @@
             border-top: 1px solid #e2e8f0;
         }
 
+        /* Sections dépliables */
+        .collapsible-section {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, rgba(26, 97, 83, 0.08), rgba(60, 165, 140, 0.08));
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .section-header:hover {
+            background: linear-gradient(135deg, rgba(26, 97, 83, 0.12), rgba(60, 165, 140, 0.12));
+        }
+
+        .section-header i.fas {
+            color: var(--primary);
+        }
+
+        .chevron-icon {
+            transition: transform 0.3s ease;
+            font-size: 0.75rem;
+            min-width: 14px;
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+            padding: 0;
+            margin: 0;
+        }
+
+        .section-content.active {
+            max-height: 500px;
+            opacity: 1;
+            padding: 0.5rem 0.5rem;
+        }
+
+        /* Interactions utilisateurs */
+        .interaction-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            background: rgba(26, 97, 83, 0.04);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.85rem;
+        }
+
+        .toggle-switch {
+            display: flex;
+            gap: 0.25rem;
+            background: #e2e8f0;
+            border-radius: 6px;
+            padding: 0.2rem;
+        }
+
+        .toggle-btn-switch {
+            padding: 0.35rem 0.7rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: var(--gray);
+        }
+
+        .toggle-btn-switch.off {
+            background: white;
+            color: var(--gray);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-btn-switch.on {
+            background: transparent;
+            color: var(--gray);
+        }
+
+        .toggle-btn-switch.off.active {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+        }
+
+        .toggle-btn-switch.on.active {
+            background: #10b981;
+            color: white;
+            box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Panneau Actions d'adaptation */
+        .adaptation-panel {
+            position: absolute;
+            bottom: 12rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            min-width: 240px;
+        }
+
+        .adaptation-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            background: rgba(26, 97, 83, 0.04);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: var(--dark);
+            font-size: 0.85rem;
+        }
+
+        .toggle-btn-simple {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--gray);
+            transition: all 0.3s ease;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-btn-simple:hover {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .toggle-btn-simple.active {
+            color: #10b981;
+        }
+
         /* Légende améliorée */
         .map-legend {
             position: absolute;
