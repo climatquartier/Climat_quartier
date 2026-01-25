@@ -171,34 +171,74 @@
 
                 <!-- Contrôles des couches améliorés -->
                 <div class="layer-controls">
-                    <div class="layer-title">
-                        <i class="fas fa-layer-group"></i> Couches Communes
-                    </div>
-                    <div class="layer-toggle">
-                        <div class="toggle-btn active" onclick="app.toggleCommuneLayer('annecy')">
-                            🏔️ Annecy
+                    <!-- Section Couches Communes (dépliable) -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-layer-group"></i> 
+                            <span>Couches Communes</span>
                         </div>
-                        <div class="toggle-btn active" onclick="app.toggleCommuneLayer('cergy')">
-                            🏙️ Cergy
-                        </div>
-                        <div class="toggle-btn active" onclick="app.toggleCommuneLayer('saintmalo')">
-                            🌊 Saint-Malo
+                        <div class="section-content active">
+                            <div class="layer-toggle">
+                                <div class="toggle-btn active" onclick="app.toggleCommuneLayer('annecy')">
+                                    🏔️ Annecy
+                                </div>
+                                <div class="toggle-btn active" onclick="app.toggleCommuneLayer('cergy')">
+                                    🏙️ Cergy
+                                </div>
+                                <div class="toggle-btn active" onclick="app.toggleCommuneLayer('saintmalo')">
+                                    🌊 Saint-Malo
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="basemap-controls">
-                        <div class="layer-title">
-                            <i class="fas fa-map"></i> Fond de carte
+                    <!-- Section Fond de carte (dépliable) -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-map"></i>
+                            <span>Fond de carte</span>
                         </div>
-                        <div class="layer-toggle">
-                            <div class="toggle-btn active" onclick="app.changeBasemap('osm')">
-                                Standard
+                        <div class="section-content active">
+                            <div class="layer-toggle">
+                                <div class="toggle-btn active" onclick="app.changeBasemap('osm')">
+                                    Standard
+                                </div>
+                                <div class="toggle-btn" onclick="app.changeBasemap('satellite')">
+                                    Satellite
+                                </div>
+                                <div class="toggle-btn" onclick="app.changeBasemap('dark')">
+                                    Sombre
+                                </div>
                             </div>
-                            <div class="toggle-btn" onclick="app.changeBasemap('satellite')">
-                                Satellite
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panneau Actions d'adaptation -->
+                <div class="adaptation-panel">
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-leaf"></i>
+                            <span>Actions d'adaptation</span>
+                        </div>
+                        <div class="section-content active">
+                            <!-- Bouton Végétation -->
+                            <div class="adaptation-toggle">
+                                <div class="toggle-label">🌿 Végétation</div>
+                                <button class="toggle-btn-simple" id="vegToggle" onclick="app.toggleVegetationLayer()">
+                                    <i class="fas fa-toggle-off"></i>
+                                </button>
                             </div>
-                            <div class="toggle-btn" onclick="app.changeBasemap('dark')">
-                                Sombre
+                            
+                            <!-- Bouton Désimperméabilisation -->
+                            <div class="adaptation-toggle">
+                                <div class="toggle-label">💧 Désimperméabilisation</div>
+                                <button class="toggle-btn-simple" id="imperToggle" onclick="app.toggleImpermeabilityLayer()">
+                                    <i class="fas fa-toggle-off"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -362,6 +402,17 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./assets/js/data.js"></script>
     <script src="./assets/js/app.js"></script>
+
+    <script>
+        // Fonction pour basculer les sections dépliables
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const chevron = header.querySelector('.chevron-icon');
+            
+            content.classList.toggle('active');
+            chevron.style.transform = content.classList.contains('active') ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+    </script>
 
 </body>
 </html>
