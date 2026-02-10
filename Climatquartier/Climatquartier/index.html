@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClimatQuartier • Simuler le climat futur</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+    
+    <link rel="stylesheet" href="./assets/css/main.css" />
+
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-globe-europe"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>ClimatQuartier</h1>
+                    <p>Simuler le climat futur de votre territoire</p>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <a class="nav-btn ghost" href="documentation.html">
+                    <i class="fas fa-book"></i> Documentation
+                </a>
+                <a class="nav-btn ghost" href="contact.html">
+                    <i class="fas fa-envelope"></i> Contact
+                </a>
+            </div>
+        </header>
+
+        <!-- Contenu principal -->
+        <div class="main-content">
+            <!-- Panneau de contrôle -->
+            <aside class="control-panel">
+                <div class="control-section">
+                    <div class="section-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>COMMUNES</span>
+                    </div>
+                    <div class="city-selector">
+                        <div class="city-btn active" data-city="cergy">
+                            <div class="city-flag" style="background: #f0f9f7; color: var(--primary);">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="city-info">
+                                <div class="city-name">Cergy</div>
+                                <div class="city-region">Île-de-France</div>
+                            </div>
+                            <div class="city-stats">
+                                <div class="city-temp">13.8°C</div>
+                                <div class="city-change">+2.0°C</div>
+                            </div>
+                        </div>
+                        
+                        <div class="city-btn" data-city="annecy">
+                            <div class="city-flag" style="background: #dbeafe; color: #2563eb;">
+                                <i class="fas fa-mountain"></i>
+                            </div>
+                            <div class="city-info">
+                                <div class="city-name">Annecy</div>
+                                <div class="city-region">Auvergne-Rhône-Alpes</div>
+                            </div>
+                            <div class="city-stats">
+                                <div class="city-temp">11.5°C</div>
+                                <div class="city-change">+2.0°C</div>
+                            </div>
+                        </div>
+                        
+                        <div class="city-btn" data-city="saintmalo">
+                            <div class="city-flag" style="background: #dcfce7; color: #16a34a;">
+                                <i class="fas fa-water"></i>
+                            </div>
+                            <div class="city-info">
+                                <div class="city-name">Saint-Malo</div>
+                                <div class="city-region">Bretagne</div>
+                            </div>
+                            <div class="city-stats">
+                                <div class="city-temp">12.2°C</div>
+                                <div class="city-change">+2.2°C</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="section-title">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>SIMULATION CLIMATIQUE</span>
+                    </div>
+                    <div class="simulation-controls">
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <div style="font-size: 0.8rem; color: var(--gray);">Horizon temporel</div>
+                            <div class="horizon-value" id="horizonValue">Aujourd'hui</div>
+                            <input type="range" id="horizonSlider" class="horizon-slider" 
+                                   min="0" max="2" step="1" value="0">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--gray);">
+                                <span>Aujourd'hui</span>
+                                <span>2030</span>
+                                <span>2050</span>
+                            </div>
+                        </div>
+
+                        <div class="scenario-selector">
+                            <div class="scenario-option active" data-scenario="ssp2">
+                                SSP2-4.5<br>
+                                <small style="font-size: 0.7rem;">Modéré</small>
+                                <div class="tooltip-wrapper">
+                                    <i class="fas fa-info-circle tooltip-icon"></i>
+                                    <div class="tooltip-content">
+                                        <p>Scénario modéré d'émissions de CO₂. Réchauffement limité à +2.6°C d'ici 2100.</p>
+                                        <a href="documentation.html" class="tooltip-link">En savoir plus</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scenario-option" data-scenario="ssp5">
+                                SSP5-8.5<br>
+                                <small style="font-size: 0.7rem;">Extrême</small>
+                                <div class="tooltip-wrapper">
+                                    <i class="fas fa-info-circle tooltip-icon"></i>
+                                    <div class="tooltip-content">
+                                        <p>Scénario extrême d'émissions élevées. Réchauffement de +4.4°C d'ici 2100.</p>
+                                        <a href="documentation.html" class="tooltip-link">En savoir plus</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-inputs">
+                            <div class="action-input">
+                                <label for="treesInput">🌳 Arbres plantés</label>
+                                <div class="action-row">
+                                    <input type="range" id="treesInput" min="0" max="20000" step="500" value="0">
+                                    <span id="treesValue">0</span>
+                                </div>
+                            </div>
+                            <div class="action-input">
+                                <label for="evInput">🌿 Espaces verts (+%)</label>
+                                <div class="action-row">
+                                    <input type="range" id="evInput" min="0" max="50" step="1" value="0">
+                                    <span id="evValue">0%</span>
+                                </div>
+                            </div>
+                            <div class="action-input">
+                                <label for="densityInput">🏘️ Densité urbaine (+/-%)</label>
+                                <div class="action-row">
+                                    <input type="range" id="densityInput" min="-10" max="15" step="1" value="0">
+                                    <span id="densityValue">0%</span>
+                                </div>
+                            </div>
+                            <div class="action-input">
+                                <label for="permInput">💧 Sols perméables (+%)</label>
+                                <div class="action-row">
+                                    <input type="range" id="permInput" min="0" max="70" step="1" value="0">
+                                    <span id="permValue">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn" id="simulateBtn">
+                                <i class="fas fa-play"></i> Lancer simulation
+                            </button>
+                            <button class="btn btn-secondary" id="resetBtn">
+                                <i class="fas fa-redo"></i> Réinitialiser
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- Carte -->
+            <main class="map-container">
+                <div id="map"></div>
+                <div class="map-overlay">
+                    <div class="overlay-header">
+                        <div class="current-city">Cergy - Île-de-France</div>
+                        <div class="scenario-tag">SSP2-4.5 • Horizon 2030</div>
+                    </div>
+                    <div class="city-description">
+                        Simulation en cours • Données projetées
+                    </div>
+                </div>
+
+                <!-- Contrôles des couches améliorés -->
+                <div class="layer-controls-wrapper">
+                    <button class="layer-controls-toggle" id="layerControlsToggle" title="Afficher les couches">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                    <div class="layer-controls" id="layerControls">
+                    <!-- Section Couches Communes (dépliable) -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-layer-group"></i> 
+                            <span>Couches Communes</span>
+                        </div>
+                        <div class="section-content active">
+                            <div class="layer-toggle">
+                                <div class="toggle-btn active" onclick="app.toggleCommuneLayer('annecy')">
+                                    🏔️ Annecy
+                                </div>
+                                <div class="toggle-btn active" onclick="app.toggleCommuneLayer('cergy')">
+                                    🏙️ Cergy
+                                </div>
+                                <div class="toggle-btn active" onclick="app.toggleCommuneLayer('saintmalo')">
+                                    🌊 Saint-Malo
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section Fond de carte (dépliable) -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-map"></i>
+                            <span>Fond de carte</span>
+                        </div>
+                        <div class="section-content active">
+                            <div class="layer-toggle">
+                                <div class="toggle-btn active" onclick="app.changeBasemap('osm')">
+                                    Standard
+                                </div>
+                                <div class="toggle-btn" onclick="app.changeBasemap('satellite')">
+                                    Satellite
+                                </div>
+                                <div class="toggle-btn" onclick="app.changeBasemap('dark')">
+                                    Sombre
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+
+                <!-- Légende améliorée -->
+                <div class="map-legend">
+                    <div class="legend-title">Légende - Communes</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e74c3c;"></div>
+                        <span>Annecy</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2ecc71;"></div>
+                        <span>Cergy</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3498db;"></div>
+                        <span>Saint-Malo</span>
+                    </div>
+                </div>
+
+                <!-- Panel d'information -->
+                <div class="info-panel" id="info-panel">
+                    <button class="close-btn" onclick="app.closeInfoPanel()">×</button>
+                    <div class="info-content" id="info-content">
+                        <!-- Contenu généré dynamiquement -->
+                    </div>
+                </div>
+            </main>
+
+            <!-- Indicateurs -->
+            <aside class="indicators-panel">
+                <div class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>INDICATEURS SIMULÉS</span>
+                </div>
+                
+                <div class="indicators-grid">
+                    <div class="indicator-card active" data-indicator="temp">
+                        <div class="indicator-header">
+                            <div class="indicator-icon temp-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="indicator-info">
+                                <div class="indicator-name">Température moyenne</div>
+                                <div class="indicator-desc">Projection annuelle</div>
+                            </div>
+                            <div class="indicator-value">
+                                <div class="value-main">15.2°C</div>
+                                <div class="value-change change-up">+1.4°C</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="indicator-card" data-indicator="heatwave">
+                        <div class="indicator-header">
+                            <div class="indicator-icon heat-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="indicator-info">
+                                <div class="indicator-name">Jours de canicule</div>
+                                <div class="indicator-desc">> 30°C</div>
+                            </div>
+                            <div class="indicator-value">
+                                <div class="value-main">14 jours</div>
+                                <div class="value-change change-up">+6 jours</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="indicator-card" data-indicator="precipitation">
+                        <div class="indicator-header">
+                            <div class="indicator-icon rain-icon">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div class="indicator-info">
+                                <div class="indicator-name">Précipitations</div>
+                                <div class="indicator-desc">Cumul annuel</div>
+                            </div>
+                            <div class="indicator-value">
+                                <div class="value-main">665 mm</div>
+                                <div class="value-change change-down">-5%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="indicator-card" data-indicator="icu">
+                        <div class="indicator-header">
+                            <div class="indicator-icon urban-icon">
+                                <i class="fas fa-city"></i>
+                            </div>
+                            <div class="indicator-info">
+                                <div class="indicator-name">Îlot de chaleur</div>
+                                <div class="indicator-desc">Intensité ICU</div>
+                            </div>
+                            <div class="indicator-value">
+                                <div class="value-main">2.0°C</div>
+                                <div class="value-change change-up">+0.5°C</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="indicator-card" data-indicator="vegetation">
+                        <div class="indicator-header">
+                            <div class="indicator-icon nature-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="indicator-info">
+                                <div class="indicator-name">Végétalisation</div>
+                                <div class="indicator-desc">Couvert végétal</div>
+                            </div>
+                            <div class="indicator-value">
+                                <div class="value-main">27%</div>
+                                <div class="value-change change-down">-3%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Graphique -->
+        <div class="chart-container">
+            <canvas id="tempChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        window.SUPABASE_URL = "https://idlylanfrdrucdxgmiso.supabase.co";
+        window.SUPABASE_ANON_KEY = "sb_publishable_TC3PfDWjks_LXJrqs0rQpw_KazgEsNV";
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./assets/js/data.js"></script>
+    <script src="./assets/js/app.js"></script>
+
+    <script>
+        // Fonction pour basculer les sections dépliables
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const chevron = header.querySelector('.chevron-icon');
+            
+            content.classList.toggle('active');
+            chevron.style.transform = content.classList.contains('active') ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+    </script>
+
+</body>
+</html>
