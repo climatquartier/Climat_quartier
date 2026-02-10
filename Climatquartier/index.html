@@ -28,31 +28,11 @@
             </div>
             
             <div class="header-actions">
-                <div class="scenario-tabs">
-                    <div class="scenario-tab active" data-scenario="ssp2">
-                        <i class="fas fa-chart-line"></i> SSP2-4.5
-                        <div class="tooltip-wrapper">
-                            <i class="fas fa-info-circle tooltip-icon"></i>
-                            <div class="tooltip-content">
-                                <p>Scénario modéré d'émissions de CO₂. Réchauffement limité à +2.6°C d'ici 2100.</p>
-                                <a href="documentation.html" class="tooltip-link">En savoir plus</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="scenario-tab" data-scenario="ssp5">
-                        <i class="fas fa-fire"></i> SSP5-8.5
-                        <div class="tooltip-wrapper">
-                            <i class="fas fa-info-circle tooltip-icon"></i>
-                            <div class="tooltip-content">
-                                <p>Scénario extrême d'émissions élevées. Réchauffement de +4.4°C d'ici 2100.</p>
-                                <a href="documentation.html" class="tooltip-link">En savoir plus</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <a class="nav-btn ghost" href="documentation.html">
                     <i class="fas fa-book"></i> Documentation
+                </a>
+                <a class="nav-btn ghost" href="contact.html">
+                    <i class="fas fa-envelope"></i> Contact
                 </a>
             </div>
         </header>
@@ -119,13 +99,13 @@
                     <div class="simulation-controls">
                         <div style="text-align: center; margin-bottom: 1rem;">
                             <div style="font-size: 0.8rem; color: var(--gray);">Horizon temporel</div>
-                            <div class="horizon-value" id="horizonValue">2030</div>
+                            <div class="horizon-value" id="horizonValue">Aujourd'hui</div>
                             <input type="range" id="horizonSlider" class="horizon-slider" 
-                                   min="2030" max="2100" step="10" value="2030">
+                                   min="0" max="2" step="1" value="0">
                             <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--gray);">
+                                <span>Aujourd'hui</span>
                                 <span>2030</span>
                                 <span>2050</span>
-                                <span>2100</span>
                             </div>
                         </div>
 
@@ -154,6 +134,37 @@
                             </div>
                         </div>
 
+                        <div class="action-inputs">
+                            <div class="action-input">
+                                <label for="treesInput">🌳 Arbres plantés</label>
+                                <div class="action-row">
+                                    <input type="range" id="treesInput" min="0" max="20000" step="500" value="0">
+                                    <span id="treesValue">0</span>
+                                </div>
+                            </div>
+                            <div class="action-input">
+                                <label for="evInput">🌿 Espaces verts (+%)</label>
+                                <div class="action-row">
+                                    <input type="range" id="evInput" min="0" max="50" step="1" value="0">
+                                    <span id="evValue">0%</span>
+                                </div>
+                            </div>
+                            <div class="action-input">
+                                <label for="densityInput">🏘️ Densité urbaine (+/-%)</label>
+                                <div class="action-row">
+                                    <input type="range" id="densityInput" min="-10" max="15" step="1" value="0">
+                                    <span id="densityValue">0%</span>
+                                </div>
+                            </div>
+                            <div class="action-input">
+                                <label for="permInput">💧 Sols perméables (+%)</label>
+                                <div class="action-row">
+                                    <input type="range" id="permInput" min="0" max="70" step="1" value="0">
+                                    <span id="permValue">0%</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="action-buttons">
                             <button class="btn" id="simulateBtn">
                                 <i class="fas fa-play"></i> Lancer simulation
@@ -163,25 +174,9 @@
                             </button>
                         </div>
 
-                        <!-- Déclencheur vidéo -->
-                        <div class="video-trigger">
-                            <div class="video-preview" id="videoTrigger">
-                                <i class="fas fa-play-circle"></i>
-                                Voir l'impact du scénario
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <div class="control-section">
-                    <div class="section-title">
-                        <i class="fas fa-chart-line"></i>
-                        <span>IMPACTS PROJETÉS</span>
-                    </div>
-                    <div id="impactsContainer" style="background: #f8fafc; padding: 1rem; border-radius: 10px;">
-                        <!-- Les impacts seront générés dynamiquement -->
-                    </div>
-                </div>
             </aside>
 
             <!-- Carte -->
@@ -198,7 +193,11 @@
                 </div>
 
                 <!-- Contrôles des couches améliorés -->
-                <div class="layer-controls">
+                <div class="layer-controls-wrapper">
+                    <button class="layer-controls-toggle" id="layerControlsToggle" title="Afficher les couches">
+                        <i class="fas fa-layer-group"></i>
+                    </button>
+                    <div class="layer-controls" id="layerControls">
                     <!-- Section Couches Communes (dépliable) -->
                     <div class="collapsible-section">
                         <div class="section-header" onclick="toggleSection(this)">
@@ -242,35 +241,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Panneau Actions d'adaptation -->
-                <div class="adaptation-panel">
-                    <div class="collapsible-section">
-                        <div class="section-header" onclick="toggleSection(this)">
-                            <i class="fas fa-chevron-down chevron-icon"></i>
-                            <i class="fas fa-leaf"></i>
-                            <span>Actions d'adaptation</span>
-                        </div>
-                        <div class="section-content active">
-                            <!-- Bouton Végétation -->
-                            <div class="adaptation-toggle">
-                                <div class="toggle-label">🌿 Végétation</div>
-                                <button class="toggle-btn-simple" id="vegToggle" onclick="app.toggleVegetationLayer()">
-                                    <i class="fas fa-toggle-off"></i>
-                                </button>
-                            </div>
-                            
-                            <!-- Bouton Désimperméabilisation -->
-                            <div class="adaptation-toggle">
-                                <div class="toggle-label">💧 Désimperméabilisation</div>
-                                <button class="toggle-btn-simple" id="imperToggle" onclick="app.toggleImpermeabilityLayer()">
-                                    <i class="fas fa-toggle-off"></i>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
+
 
                 <!-- Légende améliorée -->
                 <div class="map-legend">
@@ -395,38 +368,11 @@
         </div>
     </div>
 
-    <!-- Modal vidéo -->
-    <div class="video-modal" id="videoModal">
-        <div class="video-container">
-            <div class="video-header">
-                <h2 class="video-title" id="videoTitle">Impact du scénario climatique</h2>
-                <button class="close-video" id="closeVideo">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="video-player">
-                <video id="climateVideo" width="100%" controls poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='450' viewBox='0 0 800 450'%3E%3Crect width='800' height='450' fill='%231A6153'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='24' fill='white'%3EClimatQuartier - Simulation Climatique%3C/text%3E%3C/svg%3E">
-                    <source id="videoSource" src="" type="video/mp4">
-                    Votre navigateur ne supporte pas la lecture de vidéos.
-                </video>
-            </div>
-            
-            <div class="video-description" id="videoDescription">
-                Cette vidéo illustre les impacts du scénario climatique sélectionné sur votre territoire.
-            </div>
-            
-            <div class="video-actions">
-                <button class="video-btn secondary" id="shareVideo">
-                    <i class="fas fa-share"></i> Partager
-                </button>
-                <button class="video-btn primary" id="closeVideoBtn">
-                    <i class="fas fa-check"></i> Compris
-                </button>
-            </div>
-        </div>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        window.SUPABASE_URL = "https://idlylanfrdrucdxgmiso.supabase.co";
+        window.SUPABASE_ANON_KEY = "sb_publishable_TC3PfDWjks_LXJrqs0rQpw_KazgEsNV";
+    </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./assets/js/data.js"></script>
     <script src="./assets/js/app.js"></script>

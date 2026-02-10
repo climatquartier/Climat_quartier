@@ -1,3 +1,197 @@
+const TREE_DELTA_TEMP = [
+    { x: 0, y: 0.0 },
+    { x: 5000, y: -0.8 },
+    { x: 10000, y: -1.5 },
+    { x: 20000, y: -2.5 }
+];
+const TREE_DELTA_PM25 = [
+    { x: 0, y: 0.0 },
+    { x: 5000, y: -8.0 },
+    { x: 10000, y: -15.0 },
+    { x: 20000, y: -25.0 }
+];
+const TREE_DELTA_BIODIV = [
+    { x: 0, y: 0.0 },
+    { x: 5000, y: 25.0 },
+    { x: 10000, y: 45.0 },
+    { x: 20000, y: 80.0 }
+];
+const TREE_DELTA_ICU = [
+    { x: 0, y: 0.0 },
+    { x: 5000, y: -0.4 },
+    { x: 10000, y: -0.7 },
+    { x: 20000, y: -1.2 }
+];
+
+const EV_DELTA_SURFACE_HAB = [
+    { x: 0, y: 0.0 },
+    { x: 10, y: 12.0 },
+    { x: 25, y: 28.0 },
+    { x: 50, y: 55.0 }
+];
+const EV_DELTA_ICU = [
+    { x: 0, y: 0.0 },
+    { x: 10, y: -0.5 },
+    { x: 25, y: -1.0 },
+    { x: 50, y: -1.8 }
+];
+const EV_DELTA_BIODIV = [
+    { x: 0, y: 0.0 },
+    { x: 10, y: 30.0 },
+    { x: 25, y: 65.0 },
+    { x: 50, y: 120.0 }
+];
+const EV_DELTA_LOISIRS = [
+    { x: 0, y: 0.0 },
+    { x: 10, y: 25.0 },
+    { x: 25, y: 45.0 },
+    { x: 50, y: 80.0 }
+];
+
+const DENS_DELTA_ICU = [
+    { x: -10, y: -0.3 },
+    { x: 0, y: 0.0 },
+    { x: 15, y: 0.4 }
+];
+const DENS_DELTA_PM25 = [
+    { x: -10, y: -8.0 },
+    { x: 0, y: 0.0 },
+    { x: 15, y: 10.0 }
+];
+const DENS_DELTA_EV_HAB = [
+    { x: -10, y: 15.0 },
+    { x: 0, y: 0.0 },
+    { x: 15, y: -12.0 }
+];
+
+const PERM_DELTA_INFILTRATION = [
+    { x: 0, y: 0.0 },
+    { x: 20, y: 30.0 },
+    { x: 40, y: 55.0 },
+    { x: 70, y: 85.0 }
+];
+const PERM_DELTA_INONDATIONS = [
+    { x: 0, y: 0.0 },
+    { x: 20, y: -25.0 },
+    { x: 40, y: -45.0 },
+    { x: 70, y: -70.0 }
+];
+const PERM_DELTA_TEMP = [
+    { x: 0, y: 0.0 },
+    { x: 20, y: -1.0 },
+    { x: 40, y: -1.8 },
+    { x: 70, y: -3.0 }
+];
+const PERM_DELTA_NAPPES = [
+    { x: 0, y: 0.0 },
+    { x: 20, y: 15.0 },
+    { x: 40, y: 30.0 },
+    { x: 70, y: 55.0 }
+];
+
+function interpolate(x, points) {
+    if (!points.length) return 0;
+    if (points.length === 1) return points[0].y;
+
+    if (x <= points[0].x) {
+        const p0 = points[0];
+        if (p0.x === 0) return p0.y * (x / 1);
+        return p0.y * (x / p0.x);
+    }
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        if (x >= p1.x && x <= p2.x) {
+            const t = (x - p1.x) / (p2.x - p1.x);
+            return p1.y + t * (p2.y - p1.y);
+        }
+    }
+
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2];
+    const slope = (last.y - prev.y) / (last.x - prev.x);
+    return last.y + slope * (x - last.x);
+}
+
+function impactVegetalisation(nbArbres, base) {
+    const dT = interpolate(nbArbres, TREE_DELTA_TEMP);
+    const dPM25 = interpolate(nbArbres, TREE_DELTA_PM25);
+    const dBio = interpolate(nbArbres, TREE_DELTA_BIODIV);
+    const dICU = interpolate(nbArbres, TREE_DELTA_ICU);
+
+    return {
+        ...base,
+        temperature: base.temperature + dT,
+        icu: base.icu + dICU,
+        pm25: base.pm25 * (1 + dPM25 / 100),
+        biodiversite: base.biodiversite * (1 + dBio / 100)
+    };
+}
+
+function impactEspacesVerts(deltaEVpct, base) {
+    const dSurf = interpolate(deltaEVpct, EV_DELTA_SURFACE_HAB);
+    const dICU = interpolate(deltaEVpct, EV_DELTA_ICU);
+    const dBio = interpolate(deltaEVpct, EV_DELTA_BIODIV);
+    const dLoisir = interpolate(deltaEVpct, EV_DELTA_LOISIRS);
+
+    return {
+        ...base,
+        surfaceParHab: base.surfaceParHab * (1 + dSurf / 100),
+        icu: base.icu + dICU,
+        biodiversite: base.biodiversite * (1 + dBio / 100),
+        loisirs: base.loisirs * (1 + dLoisir / 100),
+        vegetation: base.vegetation * (1 + deltaEVpct / 100)
+    };
+}
+
+function impactDensite(deltaDensitePct, base) {
+    const dICU = interpolate(deltaDensitePct, DENS_DELTA_ICU);
+    const dPM25 = interpolate(deltaDensitePct, DENS_DELTA_PM25);
+    const dEVHab = interpolate(deltaDensitePct, DENS_DELTA_EV_HAB);
+
+    return {
+        ...base,
+        icu: base.icu + dICU,
+        pm25: base.pm25 * (1 + dPM25 / 100),
+        surfaceEVParHab: base.surfaceEVParHab * (1 + dEVHab / 100)
+    };
+}
+
+function impactSolsPermeables(pctPerm, base) {
+    const dInf = interpolate(pctPerm, PERM_DELTA_INFILTRATION);
+    const dInond = interpolate(pctPerm, PERM_DELTA_INONDATIONS);
+    const dT = interpolate(pctPerm, PERM_DELTA_TEMP);
+    const dNapp = interpolate(pctPerm, PERM_DELTA_NAPPES);
+
+    return {
+        ...base,
+        infiltration: base.infiltration * (1 + dInf / 100),
+        inondations: base.inondations * (1 + dInond / 100),
+        temperature: base.temperature + dT,
+        nappes: base.nappes * (1 + dNapp / 100)
+    };
+}
+
+function appliquerScenarioGlobal(base, params) {
+    let res = { ...base };
+    res = impactVegetalisation(params.nbArbres, res);
+    res = impactEspacesVerts(params.deltaEVpct, res);
+    res = impactDensite(params.deltaDensitePct, res);
+    res = impactSolsPermeables(params.pctPerm, res);
+    return res;
+}
+
+const DEC_FORMATTER = new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+});
+function formatSig(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '—';
+    return DEC_FORMATTER.format(num);
+}
+
 class ClimatQuartierApp {
     constructor(config) {
         if (!config) {
@@ -5,12 +199,16 @@ class ClimatQuartierApp {
         }
 
         this.zones = config.zones || {};
-        this.videos = config.videos || {};
         this.communesConfig = config.communesConfig || {};
 
         this.currentZone = 'cergy';
         this.currentScenario = 'ssp2';
-        this.currentHorizon = 2030;
+        this.horizonOptions = [
+            { label: "Aujourd'hui", value: new Date().getFullYear() },
+            { label: "2030", value: 2030 },
+            { label: "2050", value: 2050 }
+        ];
+        this.currentHorizon = this.horizonOptions[0].value;
         this.currentLayer = 'temperature';
         this.isSimulating = false;
         this.tempChart = null;
@@ -22,18 +220,38 @@ class ClimatQuartierApp {
         this.currentBasemap = 'osm';
         this.vegetationLayerActive = false;
         this.impermeabilityLayerActive = false;
+        this.greenSpacesLayerActive = false;
+        this.greenSpacesLayers = {};
+        this.greenSpacesGeoJSON = {};
+        this.communeGeoJSON = {};
+        this.baseIndicators = {};
+        this.baseIndicatorsMeta = {};
+        this.idVilleMap = {
+            annecy: 1,
+            cergy: 2,
+            saintmalo: 3
+        };
+        this.supabase = null;
+        this.actions = {
+            nbArbres: 0,
+            deltaEVpct: 0,
+            deltaDensitePct: 0,
+            pctPerm: 0
+        };
+        this.actionsCacheKey = 'cq_actions_cache_v1';
+        this.loadActionsFromCache();
 
         this.init();
     }
 
             async init() {
                 try {
+                    this.supabase = this.createSupabaseClient();
+                    await this.initializeSupabaseData();
                     this.validateData();
                     await this.initializeMap();
                     this.setupEventListeners();
-                    this.setupVideoHandlers();
                     this.updateUI();
-                    this.updateImpacts();
                     console.log('ClimatQuartier initialisé avec succès');
                 } catch (error) {
                     console.error('Erreur lors de l\'initialisation:', error);
@@ -75,6 +293,8 @@ class ClimatQuartierApp {
 
                         // Chargement des shapefiles
                         this.loadAllCommunes();
+                        this.greenSpacesLayerActive = true;
+                        setTimeout(() => this.renderGreenSpacesLayers(), 300);
                         resolve();
                     } catch (error) {
                         reject(error);
@@ -93,9 +313,7 @@ class ClimatQuartierApp {
                 const config = this.communesConfig[communeId];
                 
                 try {
-                    // Simulation du chargement d'un shapefile
-                    // En production, remplacer par le chargement réel du shapefile
-                    const geojson = await this.createSimulatedGeoJSON(commune);
+                    const geojson = this.communeGeoJSON[communeId] || await this.createSimulatedGeoJSON(commune);
                     
                     this.communeLayers[communeId] = L.geoJSON(geojson, {
                         style: {
@@ -163,6 +381,323 @@ class ClimatQuartierApp {
                 };
             }
 
+            createSupabaseClient() {
+                const url = window.SUPABASE_URL;
+                const key = window.SUPABASE_ANON_KEY;
+                if (!url || !key || !window.supabase) {
+                    console.warn('Supabase non configuré, chargement des données locales');
+                    return null;
+                }
+                return window.supabase.createClient(url, key);
+            }
+
+            async initializeSupabaseData() {
+                if (!this.supabase) return;
+
+                for (const zoneId of Object.keys(this.zones)) {
+                    const zone = this.zones[zoneId];
+                    const commune = await this.fetchCommuneByName(zone.name);
+                    if (commune) {
+                        zone.population = commune.population || zone.population;
+                        zone.superficie = commune.superf_cad ? `${commune.superf_cad} ha` : zone.superficie;
+                        zone.id_ville = commune.id_ville;
+                        this.communeGeoJSON[zoneId] = this.normalizeGeoJSON(commune.geom, {
+                            name: commune.nom || zone.name,
+                            id_ville: commune.id_ville
+                        });
+                    } else {
+                        zone.id_ville = this.idVilleMap[zoneId] || zone.id_ville;
+                    }
+
+                    const baseIndicators = await this.fetchBaseIndicatorsForZone(zoneId);
+                    this.baseIndicators[zoneId] = baseIndicators;
+                    this.baseIndicatorsMeta[zoneId] = {
+                        scenario: this.currentScenario,
+                        horizon: this.currentHorizon
+                    };
+
+                    zone.current = {
+                        temp: baseIndicators.temperature,
+                        heatwave: baseIndicators.heatwave,
+                        precipitation: baseIndicators.precipitation,
+                        icu: baseIndicators.icu,
+                        vegetation: baseIndicators.vegetation
+                    };
+
+                    if (zone.id_ville) {
+                        const greens = await this.fetchGreenSpaces(zone.id_ville);
+                        if (greens) {
+                            this.greenSpacesGeoJSON[zoneId] = greens;
+                        }
+                    }
+                }
+
+                if (this.map && this.greenSpacesLayerActive) {
+                    this.renderGreenSpacesLayers();
+                }
+            }
+
+            async fetchCommuneByName(name) {
+                try {
+                    // Prefer GeoJSON view when available
+                    let data = null;
+                    let error = null;
+
+                    const viewRes = await this.supabase
+                        .schema('appsig')
+                        .from('communes_geojson')
+                        .select('id_ville, nom, population, superf_cad, geom_geojson')
+                        .ilike('nom', `%${name}%`)
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (viewRes?.data) {
+                        data = viewRes.data;
+                    } else if (viewRes.error) {
+                        error = viewRes.error;
+                    }
+
+                    if (!data) {
+                        const tableRes = await this.supabase
+                            .schema('appsig')
+                            .from('communes')
+                            .select('id_ville, nom, population, superf_cad, geom')
+                            .ilike('nom', `%${name}%`)
+                            .limit(1)
+                            .maybeSingle();
+                        data = tableRes.data;
+                        error = tableRes.error;
+                    }
+
+                    if (error) throw error;
+                    return data;
+                } catch (err) {
+                    console.warn(`Commune introuvable pour ${name}`, err);
+                    return null;
+                }
+            }
+
+            async fetchBaseIndicatorsForZone(zoneId) {
+                const zone = this.zones[zoneId];
+                const fallback = this.baseFromStatic(zoneId);
+                const idVille = zone.id_ville || this.idVilleMap[zoneId];
+                if (!idVille) return fallback;
+
+                const climate = await this.fetchClimateData(idVille, this.currentScenario, this.currentHorizon);
+                const icu = await this.fetchAverage(idVille, 'icu_indicateurs', 'icu_intensite_max');
+                const pm25 = await this.fetchAverage(idVille, 'atmo_emicons', 'pm25');
+                const vegetation = await this.fetchAverage(idVille, 'icu_typmorpho', 'taux_occup_vegetation');
+
+                return {
+                    ...fallback,
+                    temperature: climate?.temperature ?? fallback.temperature,
+                    heatwave: climate?.heatwave ?? fallback.heatwave,
+                    precipitation: climate?.precipitation ?? fallback.precipitation,
+                    icu: icu ?? fallback.icu,
+                    pm25: pm25 ?? fallback.pm25,
+                    vegetation: vegetation ?? fallback.vegetation
+                };
+            }
+
+            async refreshBaseIndicators() {
+                if (!this.supabase) return;
+                for (const zoneId of Object.keys(this.zones)) {
+                    const baseIndicators = await this.fetchBaseIndicatorsForZone(zoneId);
+                    this.baseIndicators[zoneId] = baseIndicators;
+                    this.baseIndicatorsMeta[zoneId] = {
+                        scenario: this.currentScenario,
+                        horizon: this.currentHorizon
+                    };
+                    this.zones[zoneId].current = {
+                        temp: baseIndicators.temperature,
+                        heatwave: baseIndicators.heatwave,
+                        precipitation: baseIndicators.precipitation,
+                        icu: baseIndicators.icu,
+                        vegetation: baseIndicators.vegetation
+                    };
+                }
+            }
+
+            baseFromStatic(zoneId) {
+                const zone = this.zones[zoneId];
+                const current = zone.current || {};
+                return {
+                    temperature: current.temp ?? 0,
+                    heatwave: current.heatwave ?? 0,
+                    precipitation: current.precipitation ?? 0,
+                    icu: current.icu ?? 0,
+                    vegetation: current.vegetation ?? 0,
+                    pm25: 10,
+                    biodiversite: 1.0,
+                    surfaceParHab: 1.0,
+                    surfaceEVParHab: 1.0,
+                    loisirs: 1.0,
+                    infiltration: 1.0,
+                    inondations: 1.0,
+                    nappes: 1.0
+                };
+            }
+
+            async fetchClimateData(idVille, scenario, horizon) {
+                try {
+                    const scenarioCandidates = this.getScenarioCandidates(scenario);
+                    const { data, error } = await this.supabase
+                        .schema('appsig')
+                        .from('donnees_tracc')
+                        .select('annee, niveau_scenarii, temp_moy_an, jours_chauds_30, precip_an')
+                        .eq('id_ville', idVille)
+                        .in('niveau_scenarii', scenarioCandidates);
+                    if (error || !data?.length) return null;
+
+                    const target = this.pickClosestYear(data, horizon);
+                    return {
+                        temperature: Number(target.temp_moy_an),
+                        heatwave: Number(target.jours_chauds_30),
+                        precipitation: Number(target.precip_an)
+                    };
+                } catch (err) {
+                    console.warn('Erreur chargement donnees_tracc', err);
+                    return null;
+                }
+            }
+
+            getScenarioCandidates(scenario) {
+                const base = String(scenario || '').toLowerCase();
+                const map = {
+                    ssp2: ['ssp2', 'ssp245', 'ssp2-4.5', 'ssp2_45', 'ssp2-45', 'modere', 'modéré', 'gwl15'],
+                    ssp5: ['ssp5', 'ssp585', 'ssp5-8.5', 'ssp5_85', 'ssp5-85', 'extreme', 'extrême', 'gwl20']
+                };
+                const mapped = map[base] || [base];
+                return [...new Set([...mapped, 'ref', 'reference', 'référence', 'actuel'])];
+            }
+
+            pickClosestYear(rows, horizon) {
+                const targetYear = Number(horizon);
+                let best = rows[0];
+                let bestDelta = Math.abs(Number(rows[0].annee) - targetYear);
+                rows.forEach(row => {
+                    const delta = Math.abs(Number(row.annee) - targetYear);
+                    if (delta < bestDelta) {
+                        best = row;
+                        bestDelta = delta;
+                    }
+                });
+                return best;
+            }
+
+            async fetchAverage(idVille, table, column) {
+                try {
+                    const { data, error } = await this.supabase
+                        .schema('appsig')
+                        .from(table)
+                        .select(column)
+                        .eq('id_ville', idVille);
+                    if (error || !data?.length) return null;
+                    const values = data
+                        .map(row => Number(row[column]))
+                        .filter(v => Number.isFinite(v));
+                    if (!values.length) return null;
+                    const sum = values.reduce((acc, v) => acc + v, 0);
+                    return sum / values.length;
+                } catch (err) {
+                    console.warn(`Erreur moyenne ${table}.${column}`, err);
+                    return null;
+                }
+            }
+
+            async fetchGreenSpaces(idVille) {
+                try {
+                    // Prefer GeoJSON view when available
+                    let data = null;
+                    let error = null;
+
+                    let viewRes = await this.supabase
+                        .schema('appsig')
+                        .from('zone_vegetation_geojson')
+                        .select('id_vegetation, nature, geom_geojson')
+                        .eq('id_ville', idVille)
+                        .limit(500);
+
+                    if (viewRes?.data?.length) {
+                        data = viewRes.data;
+                    } else if (viewRes.error) {
+                        error = viewRes.error;
+                    }
+
+                    if (!data) {
+                        const publicRes = await this.supabase
+                            .from('zone_vegetation_geojson')
+                            .select('id_vegetation, nature, geom_geojson')
+                            .eq('id_ville', idVille)
+                            .limit(500);
+                        if (publicRes?.data?.length) {
+                            data = publicRes.data;
+                            error = null;
+                        } else if (publicRes.error) {
+                            error = publicRes.error;
+                        }
+                    }
+
+                    if (!data) {
+                        const tableRes = await this.supabase
+                            .schema('appsig')
+                            .from('zone_vegetation')
+                            .select('id_vegetation, nature, geom')
+                            .eq('id_ville', idVille)
+                            .limit(500);
+                        data = tableRes.data;
+                        error = tableRes.error;
+                    }
+
+                    if (error || !data?.length) {
+                        console.warn(`Aucune zone_vegetation pour id_ville=${idVille}`);
+                        return null;
+                    }
+
+                    const features = data.map(row => {
+                        const rawGeom = row.geom_geojson || row.geom;
+                        const geom = this.normalizeGeoJSON(rawGeom, { nature: row.nature, id_vegetation: row.id_vegetation });
+                        if (!geom) return [];
+                        if (geom.type === 'FeatureCollection') {
+                            return geom.features;
+                        }
+                        return [];
+                    }).flat().filter(Boolean);
+
+                    if (!features.length) return null;
+                    console.info(`Zones végétation chargées: ${features.length} (id_ville=${idVille})`);
+                    return { type: 'FeatureCollection', features };
+                } catch (err) {
+                    console.warn('Erreur chargement zone_vegetation', err);
+                    return null;
+                }
+            }
+
+            normalizeGeoJSON(raw, props = {}) {
+                if (!raw) return null;
+                let geo = raw;
+                if (typeof raw === 'string') {
+                    try {
+                        geo = JSON.parse(raw);
+                    } catch {
+                        return null;
+                    }
+                }
+                if (geo.type === 'FeatureCollection') return geo;
+                if (geo.type === 'Feature') return { type: 'FeatureCollection', features: [geo] };
+                if (geo.type && geo.coordinates) {
+                    return {
+                        type: 'FeatureCollection',
+                        features: [{
+                            type: 'Feature',
+                            properties: props,
+                            geometry: geo
+                        }]
+                    };
+                }
+                return null;
+            }
+
             // Fonctions de contrôle des couches
             toggleCommuneLayer(communeId) {
                 const layer = this.communeLayers[communeId];
@@ -186,33 +721,13 @@ class ClimatQuartierApp {
 
                 // Ajouter une classe de style pour la couche végétation
                 if (!this.vegetationLayerActive) {
-                    // Activer l'affichage avec coloration selon végétation
-                    for (const communeId of Object.keys(this.communeLayers)) {
-                        const layer = this.communeLayers[communeId];
-                        if (this.map.hasLayer(layer)) {
-                            layer.setStyle(feature => {
-                                return {
-                                    fillOpacity: 0.6,
-                                    color: this.getVegetationColor(feature.properties.vegetation || 0)
-                                };
-                            });
-                        }
-                    }
+                    this.showGreenSpacesLayers();
                     this.vegetationLayerActive = true;
                     btn.classList.add('active');
                     btn.innerHTML = '<i class="fas fa-toggle-on"></i>';
                     console.log('Couche Végétation activée');
                 } else {
-                    // Désactiver - revenir aux couleurs communes
-                    for (const communeId of Object.keys(this.communesConfig)) {
-                        const layer = this.communeLayers[communeId];
-                        if (layer) {
-                            layer.setStyle({
-                                fillColor: this.communesConfig[communeId].color,
-                                fillOpacity: 0.5
-                            });
-                        }
-                    }
+                    this.hideGreenSpacesLayers();
                     this.vegetationLayerActive = false;
                     btn.classList.remove('active');
                     btn.innerHTML = '<i class="fas fa-toggle-off"></i>';
@@ -273,6 +788,94 @@ class ClimatQuartierApp {
                 if (impermeability < 40) return '#fbbf24';      // Orange - semi-perméable
                 if (impermeability < 60) return '#f97316';      // Orange foncé - peu perméable
                 return '#ef4444';  // Rouge - imperméable
+            }
+
+            showGreenSpacesLayers() {
+                this.greenSpacesLayerActive = true;
+                this.renderGreenSpacesLayers();
+            }
+
+            hideGreenSpacesLayers() {
+                this.greenSpacesLayerActive = false;
+                Object.values(this.greenSpacesLayers).forEach(layer => {
+                    if (layer && this.map.hasLayer(layer)) {
+                        this.map.removeLayer(layer);
+                    }
+                });
+            }
+
+            renderGreenSpacesLayers() {
+                if (!this.greenSpacesLayerActive) return;
+                const scale = this.getGreenSpaceScale();
+                Object.keys(this.zones).forEach(zoneId => {
+                    const raw = this.greenSpacesGeoJSON[zoneId];
+                    if (!raw) return;
+                    if (this.greenSpacesLayers[zoneId]) {
+                        this.map.removeLayer(this.greenSpacesLayers[zoneId]);
+                    }
+                    const scaled = this.scaleGeoJSON(raw, scale);
+                    const layer = L.geoJSON(scaled, {
+                        style: {
+                            color: '#16a34a',
+                            weight: 1.5,
+                            fillColor: '#22c55e',
+                            fillOpacity: 0.55
+                        }
+                    }).addTo(this.map);
+                    this.greenSpacesLayers[zoneId] = layer;
+                    if (zoneId === this.currentZone) {
+                        try {
+                            this.map.fitBounds(layer.getBounds(), { maxZoom: 13 });
+                        } catch {}
+                    }
+                });
+            }
+
+            getGreenSpaceScale() {
+                const ev = this.actions.deltaEVpct / 100;
+                const trees = Math.min(this.actions.nbArbres / 20000, 1) * 0.2;
+                const perm = this.actions.pctPerm / 100 * 0.2;
+                const scale = 1 + (ev * 0.6) + trees + perm;
+                return Math.max(0.7, Math.min(scale, 2.0));
+            }
+
+            scaleGeoJSON(geojson, scale) {
+                const clone = JSON.parse(JSON.stringify(geojson));
+                clone.features = clone.features.map(feature => {
+                    if (!feature.geometry) return feature;
+                    const centroid = this.computeCentroid(feature.geometry);
+                    feature.geometry = this.scaleGeometry(feature.geometry, centroid, scale);
+                    return feature;
+                });
+                return clone;
+            }
+
+            computeCentroid(geometry) {
+                const coords = [];
+                const collect = (c) => {
+                    if (typeof c[0] === 'number') coords.push(c);
+                    else c.forEach(collect);
+                };
+                collect(geometry.coordinates);
+                const sum = coords.reduce((acc, c) => [acc[0] + c[0], acc[1] + c[1]], [0, 0]);
+                const count = coords.length || 1;
+                return [sum[0] / count, sum[1] / count];
+            }
+
+            scaleGeometry(geometry, centroid, scale) {
+                const scaleCoords = (c) => {
+                    if (typeof c[0] === 'number') {
+                        return [
+                            centroid[0] + (c[0] - centroid[0]) * scale,
+                            centroid[1] + (c[1] - centroid[1]) * scale
+                        ];
+                    }
+                    return c.map(scaleCoords);
+                };
+                return {
+                    ...geometry,
+                    coordinates: scaleCoords(geometry.coordinates)
+                };
             }
 
             changeBasemap(basemapType) {
@@ -340,117 +943,6 @@ class ClimatQuartierApp {
                 document.getElementById('info-panel').classList.remove('active');
             }
 
-            // ... (le reste des méthodes existantes reste inchangé)
-            setupVideoHandlers() {
-                const videoModal = document.getElementById('videoModal');
-                const closeVideo = document.getElementById('closeVideo');
-                const closeVideoBtn = document.getElementById('closeVideoBtn');
-                const videoTrigger = document.getElementById('videoTrigger');
-                const shareVideo = document.getElementById('shareVideo');
-                const climateVideo = document.getElementById('climateVideo');
-                const videoSource = document.getElementById('videoSource');
-
-                videoTrigger.addEventListener('click', () => {
-                    this.openVideoModal();
-                });
-
-                const closeModal = () => {
-                    videoModal.classList.remove('active');
-                    climateVideo.pause();
-                };
-
-                closeVideo.addEventListener('click', closeModal);
-                closeVideoBtn.addEventListener('click', closeModal);
-
-                shareVideo.addEventListener('click', () => {
-                    this.shareVideo();
-                });
-
-                videoModal.addEventListener('click', (e) => {
-                    if (e.target === videoModal) {
-                        closeModal();
-                    }
-                });
-
-                climateVideo.addEventListener('ended', () => {
-                    closeVideoBtn.focus();
-                });
-            }
-
-            openVideoModal() {
-                const videoModal = document.getElementById('videoModal');
-                const videoTitle = document.getElementById('videoTitle');
-                const videoDescription = document.getElementById('videoDescription');
-                const climateVideo = document.getElementById('climateVideo');
-                const videoSource = document.getElementById('videoSource');
-
-                const videoData = this.videos[this.currentScenario];
-
-                videoTitle.textContent = videoData.title;
-                
-                let descriptionHTML = `
-                    <p>${videoData.description}</p>
-                    <div style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px;">
-                        <strong style="color: var(--primary);">Impacts principaux :</strong>
-                        <ul style="margin-top: 0.5rem; padding-left: 1.2rem;">
-                `;
-                
-                videoData.impacts.forEach(impact => {
-                    descriptionHTML += `<li style="margin-bottom: 0.3rem;">${impact}</li>`;
-                });
-                
-                descriptionHTML += `</ul></div>`;
-                videoDescription.innerHTML = descriptionHTML;
-
-                const demoVideos = {
-                    ssp2: "https://assets.codepen.io/148180/climate-scenario-ssp2.mp4",
-                    ssp5: "https://assets.codepen.io/148180/climate-scenario-ssp5.mp4"
-                };
-
-                videoSource.src = demoVideos[this.currentScenario];
-                climateVideo.load();
-
-                videoModal.classList.add('active');
-                climateVideo.currentTime = 0;
-                
-                const playPromise = climateVideo.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log('Lecture automatique bloquée');
-                        videoDescription.innerHTML += `
-                            <div style="margin-top: 1rem; padding: 0.8rem; background: #fef3c7; border-radius: 6px; text-align: center;">
-                                <i class="fas fa-play-circle" style="color: #d97706;"></i>
-                                <span style="color: #92400e; font-size: 0.9rem;">Cliquez sur le bouton lecture pour démarrer la vidéo</span>
-                            </div>
-                        `;
-                    });
-                }
-            }
-
-            shareVideo() {
-                const videoData = this.videos[this.currentScenario];
-                const shareText = `🔍 Découvrez l'impact du ${videoData.title} sur ClimatQuartier\n\n${window.location.href}\n\n#ClimatQuartier #ChangementClimatique`;
-                
-                if (navigator.share) {
-                    navigator.share({
-                        title: videoData.title,
-                        text: shareText,
-                        url: window.location.href
-                    }).catch(err => {
-                        this.copyToClipboard(shareText);
-                    });
-                } else {
-                    this.copyToClipboard(shareText);
-                }
-            }
-
-            copyToClipboard(text) {
-                navigator.clipboard.writeText(text).then(() => {
-                    this.showMessage('✅ Lien copié dans le presse-papier !');
-                }).catch(err => {
-                    prompt('📋 Copiez ce lien pour partager:', text);
-                });
-            }
 
             showMessage(message) {
                 const messageDiv = document.createElement('div');
@@ -486,9 +978,7 @@ class ClimatQuartierApp {
                 this.areaLayers = {};
 
                 Object.keys(this.zones).forEach(zone => {
-                    const currentData = this.zones[zone].current;
-                    const simData = this.zones[zone].simulations[this.currentScenario]?.[this.currentHorizon];
-                    const data = this.isSimulating ? simData : currentData;
+                    const data = this.getDisplayData(zone);
                     
                     const bounds = this.zones[zone].bounds;
                     const rectangle = L.rectangle(bounds, {
@@ -559,9 +1049,7 @@ class ClimatQuartierApp {
                 Object.keys(this.zones).forEach(zone => {
                     const layer = this.areaLayers[zone];
                     if (layer) {
-                        const currentData = this.zones[zone].current;
-                        const simData = this.zones[zone].simulations[this.currentScenario][this.currentHorizon];
-                        const data = this.isSimulating ? simData : currentData;
+                        const data = this.getDisplayData(zone);
                         
                         layer.setStyle({
                             color: this.getLayerColor(data, this.currentLayer),
@@ -580,10 +1068,10 @@ class ClimatQuartierApp {
                             ${this.zones[zone].name} - Territoire communal
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em; margin: 10px 0;">
-                            <div><i class="fas fa-thermometer-half" style="color: #d97706;"></i> ${data.temp}°C</div>
-                            <div><i class="fas fa-fire" style="color: #dc2626;"></i> ${data.heatwave} j canicule</div>
-                            <div><i class="fas fa-cloud-rain" style="color: #2563eb;"></i> ${data.precipitation} mm</div>
-                            <div><i class="fas fa-leaf" style="color: #16a34a;"></i> ${data.vegetation}% végétal</div>
+                            <div><i class="fas fa-thermometer-half" style="color: #d97706;"></i> ${formatSig(data.temp)}°C</div>
+                            <div><i class="fas fa-fire" style="color: #dc2626;"></i> ${formatSig(data.heatwave)} j canicule</div>
+                            <div><i class="fas fa-cloud-rain" style="color: #2563eb;"></i> ${formatSig(data.precipitation)} mm</div>
+                            <div><i class="fas fa-leaf" style="color: #16a34a;"></i> ${formatSig(data.vegetation)}% végétal</div>
                         </div>
                         <div style="margin-top: 10px; padding: 8px; background: #f8fafc; border-radius: 6px; font-size: 0.8em; color: #64748b; text-align: center;">
                             <i class="fas fa-${this.isSimulating ? 'chart-line' : 'info-circle'}"></i> 
@@ -617,7 +1105,7 @@ class ClimatQuartierApp {
                         cursor: pointer;
                         transition: all 0.3s ease;
                     " title="${this.zones[zone].name}">
-                        ${temp.toFixed(1)}°
+                        ${formatSig(temp)}°
                     </div>
                 `;
             }
@@ -631,9 +1119,7 @@ class ClimatQuartierApp {
 
             createPopupContent(zone) {
                 try {
-                    const currentData = this.zones[zone].current;
-                    const simData = this.zones[zone].simulations[this.currentScenario][this.currentHorizon];
-                    const data = this.isSimulating ? simData : currentData;
+                    const data = this.getDisplayData(zone);
                     
                     return `
                         <div style="min-width: 220px; font-family: 'Inter', sans-serif;">
@@ -641,10 +1127,10 @@ class ClimatQuartierApp {
                                 ${this.zones[zone].name}
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9em;">
-                                <div><i class="fas fa-thermometer-half" style="color: #d97706;"></i> ${data.temp}°C</div>
-                                <div><i class="fas fa-fire" style="color: #dc2626;"></i> ${data.heatwave} j canicule</div>
-                                <div><i class="fas fa-cloud-rain" style="color: #2563eb;"></i> ${data.precipitation} mm</div>
-                                <div><i class="fas fa-leaf" style="color: #16a34a;"></i> ${data.vegetation}% végétal</div>
+                                <div><i class="fas fa-thermometer-half" style="color: #d97706;"></i> ${formatSig(data.temp)}°C</div>
+                                <div><i class="fas fa-fire" style="color: #dc2626;"></i> ${formatSig(data.heatwave)} j canicule</div>
+                                <div><i class="fas fa-cloud-rain" style="color: #2563eb;"></i> ${formatSig(data.precipitation)} mm</div>
+                                <div><i class="fas fa-leaf" style="color: #16a34a;"></i> ${formatSig(data.vegetation)}% végétal</div>
                             </div>
                             <div style="margin-top: 10px; padding: 8px; background: #f8fafc; border-radius: 6px; font-size: 0.8em; color: #64748b;">
                                 <i class="fas fa-${this.isSimulating ? 'chart-line' : 'info-circle'}"></i> 
@@ -677,10 +1163,8 @@ class ClimatQuartierApp {
 
             updateIndicators() {
                 try {
-                    const currentData = this.zones[this.currentZone].current;
-                    const simData = this.zones[this.currentZone].simulations[this.currentScenario][this.currentHorizon];
-                    const data = this.isSimulating ? simData : currentData;
-                    const baseData = this.zones[this.currentZone].current;
+                    const baseData = this.getBaseUIData(this.currentZone);
+                    const data = this.isSimulating ? this.getSimulatedUIData(this.currentZone) : baseData;
                     
                     document.querySelectorAll('.indicator-card').forEach(card => {
                         const indicator = card.dataset.indicator;
@@ -688,14 +1172,27 @@ class ClimatQuartierApp {
                         const changeElement = card.querySelector('.value-change');
                         
                         if (valueElement) {
-                            valueElement.textContent = this.formatValue(indicator, data[indicator]);
+                            const rawValue = Number.isFinite(data[indicator]) ? data[indicator] : baseData[indicator];
+                            valueElement.textContent = this.formatValue(indicator, rawValue);
                         }
                         
                         if (changeElement && this.isSimulating) {
-                            const change = data[indicator] - baseData[indicator];
-                            const percentChange = ((change / baseData[indicator]) * 100).toFixed(1);
-                            changeElement.textContent = `${change > 0 ? '+' : ''}${percentChange}%`;
-                            changeElement.className = `value-change ${change > 0 ? 'change-up' : 'change-down'}`;
+                            const baseVal = Number(baseData[indicator]) || 0;
+                            const currentVal = Number.isFinite(data[indicator]) ? data[indicator] : baseVal;
+                            const change = currentVal - baseVal;
+                            const percentChange = baseVal ? (change / baseVal) * 100 : 0;
+                            changeElement.textContent = `${change > 0 ? '+' : ''}${formatSig(percentChange)}%`;
+                            const isPositive = change > 0;
+                            const isNegative = change < 0;
+                            let className = 'value-change';
+
+                            if (indicator === 'vegetation') {
+                                className += isPositive ? ' change-down' : isNegative ? ' change-up' : '';
+                            } else {
+                                className += isPositive ? ' change-up' : isNegative ? ' change-down' : '';
+                            }
+
+                            changeElement.className = className;
                         } else if (changeElement) {
                             changeElement.textContent = 'Données actuelles';
                             changeElement.className = 'value-change';
@@ -708,11 +1205,11 @@ class ClimatQuartierApp {
 
             formatValue(indicator, value) {
                 const formats = {
-                    'temp': v => `${v.toFixed(1)}°C`,
-                    'heatwave': v => `${v} jours`,
-                    'precipitation': v => `${v} mm`,
-                    'icu': v => `${v.toFixed(1)}°C`,
-                    'vegetation': v => `${v}%`
+                    'temp': v => `${formatSig(v)}°C`,
+                    'heatwave': v => `${formatSig(v)} jours`,
+                    'precipitation': v => `${formatSig(v)} mm`,
+                    'icu': v => `${formatSig(v)}°C`,
+                    'vegetation': v => `${formatSig(v)}%`
                 };
                 return formats[indicator] ? formats[indicator](value) : value;
             }
@@ -740,8 +1237,9 @@ class ClimatQuartierApp {
                         `${this.zones[this.currentZone].name} - ${this.zones[this.currentZone].region}`;
                     
                     const scenarioLabel = this.currentScenario === 'ssp2' ? 'SSP2-4.5 (Modéré)' : 'SSP5-8.5 (Extrême)';
+                    const horizonLabel = this.getHorizonLabel();
                     document.querySelector('.scenario-tag').textContent = 
-                        `${scenarioLabel} • Horizon ${this.currentHorizon}`;
+                        `${scenarioLabel} • Horizon ${horizonLabel}`;
                     
                     document.querySelector('.city-description').textContent = 
                         this.isSimulating ? 'Simulation en cours • Données projetées' : 'Situation actuelle • Données 2025';
@@ -752,10 +1250,6 @@ class ClimatQuartierApp {
 
             updateScenarioTabs() {
                 try {
-                    document.querySelectorAll('.scenario-tab').forEach(tab => {
-                        tab.classList.toggle('active', tab.dataset.scenario === this.currentScenario);
-                    });
-                    
                     document.querySelectorAll('.scenario-option').forEach(option => {
                         option.classList.toggle('active', option.dataset.scenario === this.currentScenario);
                     });
@@ -770,15 +1264,15 @@ class ClimatQuartierApp {
                         btn.classList.toggle('active', btn.dataset.city === this.currentZone);
                         
                         const city = btn.dataset.city;
-                        const currentData = this.zones[city].current;
-                        const simData = this.zones[city].simulations[this.currentScenario][this.currentHorizon];
-                        const temp = this.isSimulating ? simData.temp : currentData.temp;
+                        const baseData = this.getBaseUIData(city);
+                        const simData = this.getSimulatedUIData(city);
+                        const temp = this.isSimulating ? simData.temp : baseData.temp;
                         
-                        btn.querySelector('.city-temp').textContent = `${temp.toFixed(1)}°C`;
+                        btn.querySelector('.city-temp').textContent = `${formatSig(temp)}°C`;
                         
                         if (this.isSimulating) {
-                            const change = temp - currentData.temp;
-                            btn.querySelector('.city-change').textContent = `${change > 0 ? '+' : ''}${change.toFixed(1)}°C`;
+                            const change = temp - baseData.temp;
+                            btn.querySelector('.city-change').textContent = `${change > 0 ? '+' : ''}${formatSig(change)}°C`;
                             btn.querySelector('.city-change').style.color = change > 0 ? '#ef4444' : '#10b981';
                         } else {
                             btn.querySelector('.city-change').textContent = 'Actuel';
@@ -866,53 +1360,6 @@ class ClimatQuartierApp {
                 }
             }
 
-            updateImpacts() {
-                try {
-                    const container = document.getElementById('impactsContainer');
-                    const data = this.zones[this.currentZone].simulations[this.currentScenario][this.currentHorizon];
-                    const currentData = this.zones[this.currentZone].current;
-
-                    const impacts = [
-                        {
-                            icon: 'fa-temperature-high',
-                            label: 'Vagues de chaleur',
-                            value: `+${data.heatwave - currentData.heatwave} jours`,
-                            color: '#ef4444'
-                        },
-                        {
-                            icon: 'fa-tint',
-                            label: 'Précipitations',
-                            value: `${(((data.precipitation - currentData.precipitation) / currentData.precipitation) * 100).toFixed(1)}%`,
-                            color: '#2563eb'
-                        },
-                        {
-                            icon: 'fa-tree',
-                            label: 'Végétation',
-                            value: `${(((data.vegetation - currentData.vegetation) / currentData.vegetation) * 100).toFixed(1)}%`,
-                            color: '#10b981'
-                        },
-                        {
-                            icon: 'fa-city',
-                            label: 'Îlot de chaleur',
-                            value: `+${(data.icu - currentData.icu).toFixed(1)}°C`,
-                            color: '#f59e0b'
-                        }
-                    ];
-
-                    container.innerHTML = impacts.map(impact => `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; padding: 0.5rem; background: white; border-radius: 8px;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas ${impact.icon}" style="color: ${impact.color};"></i>
-                                <span style="font-size: 0.8rem;">${impact.label}</span>
-                            </div>
-                            <span style="font-weight: 600; color: ${impact.color}; font-size: 0.9rem;">${impact.value}</span>
-                        </div>
-                    `).join('');
-                } catch (error) {
-                    console.error('Erreur lors de la mise à jour des impacts:', error);
-                    document.getElementById('impactsContainer').innerHTML = '<div style="color: #ef4444; text-align: center;">Erreur de chargement des données</div>';
-                }
-            }
 
             setupEventListeners() {
                 // Slider d'horizon avec debounce
@@ -920,12 +1367,13 @@ class ClimatQuartierApp {
                 document.getElementById('horizonSlider').addEventListener('input', (e) => {
                     clearTimeout(sliderTimeout);
                     sliderTimeout = setTimeout(() => {
-                        this.currentHorizon = parseInt(e.target.value);
-                        document.getElementById('horizonValue').textContent = this.currentHorizon;
-                        if (this.isSimulating) {
+                        const idx = parseInt(e.target.value, 10);
+                        const opt = this.horizonOptions[idx] || this.horizonOptions[0];
+                        this.currentHorizon = opt.value;
+                        document.getElementById('horizonValue').textContent = opt.label;
+                        this.refreshBaseIndicators().then(() => {
                             this.updateUI();
-                            this.updateImpacts();
-                        }
+                        });
                     }, 100);
                 });
 
@@ -934,14 +1382,13 @@ class ClimatQuartierApp {
                     const newScenario = e.currentTarget.dataset.scenario;
                     if (newScenario !== this.currentScenario) {
                         this.currentScenario = newScenario;
-                        if (this.isSimulating) {
+                        this.refreshBaseIndicators().then(() => {
                             this.updateUI();
-                            this.updateImpacts();
-                        }
+                        });
                     }
                 };
 
-                document.querySelectorAll('.scenario-tab, .scenario-option').forEach(element => {
+                document.querySelectorAll('.scenario-option').forEach(element => {
                     element.addEventListener('click', scenarioHandler);
                 });
 
@@ -971,8 +1418,8 @@ class ClimatQuartierApp {
                     btn.disabled = true;
                     
                     setTimeout(() => {
+                        this.updateActionIndicators();
                         this.updateUI();
-                        this.updateImpacts();
                         btn.disabled = false;
                         isSimulating = false;
                     }, 800);
@@ -981,16 +1428,16 @@ class ClimatQuartierApp {
                 // Reset amélioré
                 document.getElementById('resetBtn').addEventListener('click', () => {
                     this.isSimulating = false;
-                    this.currentHorizon = 2030;
-                    document.getElementById('horizonSlider').value = 2030;
-                    document.getElementById('horizonValue').textContent = '2030';
+                    this.currentHorizon = this.horizonOptions[0].value;
+                    document.getElementById('horizonSlider').value = 0;
+                    document.getElementById('horizonValue').textContent = this.horizonOptions[0].label;
+                    this.resetActions();
                     
                     const btn = document.getElementById('simulateBtn');
                     btn.innerHTML = '<i class="fas fa-play"></i> Lancer simulation';
                     btn.style.background = '';
                     
                     this.updateUI();
-                    this.updateImpacts();
                 });
 
                 // Indicateurs
@@ -1000,12 +1447,21 @@ class ClimatQuartierApp {
                         e.currentTarget.classList.add('active');
                     });
                 });
+
+                const layerToggle = document.getElementById('layerControlsToggle');
+                const layerPanel = document.getElementById('layerControls');
+                if (layerToggle && layerPanel) {
+                    layerToggle.addEventListener('click', () => {
+                        layerPanel.classList.toggle('open');
+                    });
+                }
+
+                this.setupActionInputs();
             }
 
             switchCity(city) {
                 this.currentZone = city;
                 this.updateUI();
-                this.updateImpacts();
                 this.map.fitBounds(this.zones[city].bounds);
             }
 
@@ -1035,6 +1491,141 @@ class ClimatQuartierApp {
                         });
                     });
                 });
+            }
+
+            setupActionInputs() {
+                const syncValue = (inputId, valueId, suffix = '') => {
+                    const input = document.getElementById(inputId);
+                    const value = document.getElementById(valueId);
+                    if (!input || !value) return;
+                    value.textContent = `${input.value}${suffix}`;
+                };
+
+                const onInput = (inputId, valueId, key, suffix = '') => {
+                    const input = document.getElementById(inputId);
+                    if (!input) return;
+                    input.addEventListener('input', () => {
+                        const val = Number(input.value);
+                        this.actions[key] = val;
+                        this.saveActionsToCache();
+                        syncValue(inputId, valueId, suffix);
+                        if (this.isSimulating) {
+                            this.updateActionIndicators();
+                            this.updateUI();
+                        }
+                    });
+                    syncValue(inputId, valueId, suffix);
+                };
+
+                onInput('treesInput', 'treesValue', 'nbArbres', '');
+                onInput('evInput', 'evValue', 'deltaEVpct', '%');
+                onInput('densityInput', 'densityValue', 'deltaDensitePct', '%');
+                onInput('permInput', 'permValue', 'pctPerm', '%');
+
+                const cached = this.actions;
+                const setInput = (id, value, suffix = '') => {
+                    const input = document.getElementById(id);
+                    const valueEl = document.getElementById(id.replace('Input', 'Value'));
+                    if (input) input.value = value;
+                    if (valueEl) valueEl.textContent = `${value}${suffix}`;
+                };
+                setInput('treesInput', cached.nbArbres);
+                setInput('evInput', cached.deltaEVpct, '%');
+                setInput('densityInput', cached.deltaDensitePct, '%');
+                setInput('permInput', cached.pctPerm, '%');
+            }
+
+            resetActions() {
+                const setInput = (id, value, suffix = '') => {
+                    const input = document.getElementById(id);
+                    const valueEl = document.getElementById(id.replace('Input', 'Value'));
+                    if (input) input.value = value;
+                    if (valueEl) valueEl.textContent = `${value}${suffix}`;
+                };
+                this.actions = { nbArbres: 0, deltaEVpct: 0, deltaDensitePct: 0, pctPerm: 0 };
+                this.saveActionsToCache();
+                setInput('treesInput', 0);
+                setInput('evInput', 0, '%');
+                setInput('densityInput', 0, '%');
+                setInput('permInput', 0, '%');
+                this.renderGreenSpacesLayers();
+            }
+
+            updateActionIndicators() {
+                if (this.greenSpacesLayerActive) {
+                    this.renderGreenSpacesLayers();
+                }
+            }
+
+            loadActionsFromCache() {
+                try {
+                    const raw = localStorage.getItem(this.actionsCacheKey);
+                    if (!raw) return;
+                    const parsed = JSON.parse(raw);
+                    if (!parsed || typeof parsed !== 'object') return;
+                    this.actions = {
+                        nbArbres: Number(parsed.nbArbres) || 0,
+                        deltaEVpct: Number(parsed.deltaEVpct) || 0,
+                        deltaDensitePct: Number(parsed.deltaDensitePct) || 0,
+                        pctPerm: Number(parsed.pctPerm) || 0
+                    };
+                } catch {}
+            }
+
+            saveActionsToCache() {
+                try {
+                    localStorage.setItem(this.actionsCacheKey, JSON.stringify(this.actions));
+                } catch {}
+            }
+
+            getBaseIndicators(zoneId) {
+                const meta = this.baseIndicatorsMeta[zoneId];
+                if (this.supabase && meta && (meta.scenario !== this.currentScenario || meta.horizon !== this.currentHorizon)) {
+                    this.refreshBaseIndicators();
+                }
+                return this.baseIndicators[zoneId] || this.baseFromStatic(zoneId);
+            }
+
+            getSimulatedIndicators(zoneId) {
+                const base = this.getBaseIndicators(zoneId);
+                const sim = appliquerScenarioGlobal(base, this.actions);
+                return {
+                    ...base,
+                    ...sim,
+                    vegetation: Number.isFinite(sim.vegetation) ? sim.vegetation : base.vegetation
+                };
+            }
+
+            getBaseUIData(zoneId) {
+                const base = this.getBaseIndicators(zoneId);
+                return {
+                    temp: base.temperature,
+                    heatwave: base.heatwave,
+                    precipitation: base.precipitation,
+                    icu: base.icu,
+                    vegetation: base.vegetation
+                };
+            }
+
+            getSimulatedUIData(zoneId) {
+                const base = this.getBaseIndicators(zoneId);
+                const sim = this.getSimulatedIndicators(zoneId);
+                return {
+                    temp: sim.temperature,
+                    heatwave: base.heatwave,
+                    precipitation: base.precipitation,
+                    icu: sim.icu,
+                    vegetation: Number.isFinite(sim.vegetation) ? sim.vegetation : base.vegetation
+                };
+            }
+
+            getDisplayData(zoneId) {
+                return this.isSimulating ? this.getSimulatedUIData(zoneId) : this.getBaseUIData(zoneId);
+            }
+
+            getHorizonLabel() {
+                const found = this.horizonOptions.find(opt => opt.value === this.currentHorizon);
+                return found ? found.label : String(this.currentHorizon);
             }
 
             showError(message) {
