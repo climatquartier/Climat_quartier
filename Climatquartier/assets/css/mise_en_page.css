@@ -366,6 +366,38 @@ nav a.active::after {
     transform: translateY(-2px);
 }
 
+/* ---------------------------------------------------------------
+   🔘 BOUTONS GÉNÉRAUX + LIEN ÉQUIPE
+   --------------------------------------------------------------- */
+
+.btn {
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 0.75rem 1.6rem;
+    border: none;
+    border-radius: 30px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+    background: var(--white);
+    color: var(--primary-color);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.team-link {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0 2.5rem;
+}
+
 
 /* ---------------------------------------------------------------
    📱 RESPONSIVE — HERO & CARDS

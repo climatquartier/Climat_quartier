@@ -31,9 +31,15 @@
                 <a class="nav-btn ghost" href="documentation.html">
                     <i class="fas fa-book"></i> Documentation
                 </a>
+                <a class="nav-btn ghost" href="team.html">
+                    <i class="fas fa-users"></i> Équipe
+                </a>
                 <a class="nav-btn ghost" href="contact.html">
                     <i class="fas fa-envelope"></i> Contact
                 </a>
+                <button class="nav-btn ghost theme-toggle" id="theme-toggle" aria-label="Changer le thème">
+                    <i class="fas fa-moon"></i>
+                </button>
             </div>
         </header>
 
@@ -101,11 +107,12 @@
                             <div style="font-size: 0.8rem; color: var(--gray);">Horizon temporel</div>
                             <div class="horizon-value" id="horizonValue">Aujourd'hui</div>
                             <input type="range" id="horizonSlider" class="horizon-slider" 
-                                   min="0" max="2" step="1" value="0">
+                                   min="0" max="3" step="1" value="0">
                             <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--gray);">
                                 <span>Aujourd'hui</span>
                                 <span>2030</span>
                                 <span>2050</span>
+                                <span>2100</span>
                             </div>
                         </div>
 
@@ -116,7 +123,7 @@
                                 <div class="tooltip-wrapper">
                                     <i class="fas fa-info-circle tooltip-icon"></i>
                                     <div class="tooltip-content">
-                                        <p>Scénario modéré d'émissions de CO₂. Réchauffement limité à +2.6°C d'ici 2050.</p>
+                                        <p>Scénario modéré d'émissions de CO₂. Réchauffement limité à +2.6°C d'ici 2100.</p>
                                         <a href="documentation.html" class="tooltip-link">En savoir plus</a>
                                     </div>
                                 </div>
@@ -127,7 +134,7 @@
                                 <div class="tooltip-wrapper">
                                     <i class="fas fa-info-circle tooltip-icon"></i>
                                     <div class="tooltip-content">
-                                        <p>Scénario extrême d'émissions élevées. Réchauffement de +4.4°C d'ici 2050.</p>
+                                        <p>Scénario extrême d'émissions élevées. Réchauffement de +4.4°C d'ici 2100.</p>
                                         <a href="documentation.html" class="tooltip-link">En savoir plus</a>
                                     </div>
                                 </div>
@@ -220,6 +227,22 @@
                         </div>
                     </div>
                     
+                    <!-- Section Zones de végétation -->
+                    <div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-leaf"></i>
+                            <span>Zones de végétation</span>
+                        </div>
+                        <div class="section-content active">
+                            <div class="layer-toggle">
+                                <div class="toggle-btn active" onclick="app.toggleVegetationLayer()">
+                                    🌿 Zones végétation
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Section Fond de carte (dépliable) -->
                     <div class="collapsible-section">
                         <div class="section-header" onclick="toggleSection(this)">
@@ -247,7 +270,7 @@
 
                 <!-- Légende améliorée -->
                 <div class="map-legend">
-                    <div class="legend-title">Légende - Communes</div>
+                    <div class="legend-title">Légende</div>
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: #e74c3c;"></div>
                         <span>Annecy</span>
@@ -259,6 +282,10 @@
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: #3498db;"></div>
                         <span>Saint-Malo</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #22c55e;"></div>
+                        <span>Zones de végétation</span>
                     </div>
                 </div>
 
@@ -386,6 +413,26 @@
             content.classList.toggle('active');
             chevron.style.transform = content.classList.contains('active') ? 'rotate(0deg)' : 'rotate(-90deg)';
         }
+    </script>
+    <script>
+        (function () {
+            const btn = document.getElementById('theme-toggle');
+            if (!btn) return;
+            const root = document.documentElement;
+            const stored = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initial = stored || (prefersDark ? 'dark' : 'light');
+            root.setAttribute('data-theme', initial);
+            btn.innerHTML = initial === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.innerHTML = next === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+        })();
     </script>
 
 </body>

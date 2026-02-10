@@ -6,6 +6,12 @@
     <title>ClimatQuartier • Contact</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./assets/css/main.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("Grel3CSlF3MfGOYG8");
+       })();
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -23,9 +29,15 @@
                 <a class="nav-btn ghost" href="index.html">
                     <i class="fas fa-arrow-left"></i> Retour
                 </a>
+                <a class="nav-btn ghost" href="team.html">
+                    <i class="fas fa-users"></i> Équipe
+                </a>
                 <a class="nav-btn ghost" href="documentation.html">
                     <i class="fas fa-book"></i> Documentation
                 </a>
+                <button class="nav-btn ghost theme-toggle" id="theme-toggle" aria-label="Changer le thème">
+                    <i class="fas fa-moon"></i>
+                </button>
             </div>
         </header>
 
@@ -39,11 +51,11 @@
                 <form id="contactForm" class="contact-form">
                     <div class="form-row">
                         <label for="contactName">Nom</label>
-                        <input id="contactName" name="name" type="text" placeholder="Votre nom" required>
+                        <input id="contactName" name="from_name" type="text" placeholder="Votre nom" required>
                     </div>
                     <div class="form-row">
                         <label for="contactEmail">Email</label>
-                        <input id="contactEmail" name="email" type="email" placeholder="vous@exemple.fr" required>
+                        <input id="contactEmail" name="from_email" type="email" placeholder="vous@exemple.fr" required>
                     </div>
                     <div class="form-row">
                         <label for="contactSubject">Sujet</label>
@@ -55,12 +67,9 @@
                     </div>
 
                     <div class="contact-actions">
-                        <button class="btn" type="submit">
+                        <button class="btn" type="submit" id="btn-submit">
                             <i class="fas fa-paper-plane"></i> Envoyer
                         </button>
-                        <a class="nav-btn ghost" href="mailto:climatquartier@hotmail.com">
-                            <i class="fas fa-envelope"></i> Ouvrir l’email
-                        </a>
                     </div>
                 </form>
 
@@ -73,23 +82,48 @@
 
     <script>
         const form = document.getElementById('contactForm');
+        const btn = document.getElementById('btn-submit');
         form.addEventListener('submit', (event) => {
             event.preventDefault();
-            const name = document.getElementById('contactName').value.trim();
-            const email = document.getElementById('contactEmail').value.trim();
-            const subject = document.getElementById('contactSubject').value.trim();
-            const message = document.getElementById('contactMessage').value.trim();
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi...';
 
-            const body = [
-                `Nom: ${name}`,
-                `Email: ${email}`,
-                '',
-                message
-            ].join('\n');
+            const serviceID = 'service_x3fk2ev';
+            const templateID = 'template_miibp8y';
 
-            const mailto = `mailto:climatquartier@hotmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailto;
+            emailjs.sendForm(serviceID, templateID, form)
+                .then(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    alert('Message envoyé avec succès !');
+                    form.reset();
+                }, (err) => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    alert('Erreur lors de l\'envoi : ' + JSON.stringify(err));
+                });
         });
+    </script>
+    <script>
+        (function () {
+            const btn = document.getElementById('theme-toggle');
+            if (!btn) return;
+            const root = document.documentElement;
+            const stored = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initial = stored || (prefersDark ? 'dark' : 'light');
+            root.setAttribute('data-theme', initial);
+            btn.innerHTML = initial === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.innerHTML = next === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+        })();
     </script>
 </body>
 </html>

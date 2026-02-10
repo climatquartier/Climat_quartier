@@ -26,9 +26,15 @@
                 <a class="nav-btn ghost" href="index.html">
                     <i class="fas fa-arrow-left"></i> Retour à la simulation
                 </a>
+                <a class="nav-btn ghost" href="team.html">
+                    <i class="fas fa-users"></i> Équipe
+                </a>
                 <a class="nav-btn ghost" href="contact.html">
                     <i class="fas fa-envelope"></i> Contact
                 </a>
+                <button class="nav-btn ghost theme-toggle" id="theme-toggle" aria-label="Changer le thème">
+                    <i class="fas fa-moon"></i>
+                </button>
             </div>
         </header>
 
@@ -89,5 +95,25 @@
     </div>
 
     <script src="./assets/js/documentation.js"></script>
+    <script>
+        (function () {
+            const btn = document.getElementById('theme-toggle');
+            if (!btn) return;
+            const root = document.documentElement;
+            const stored = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initial = stored || (prefersDark ? 'dark' : 'light');
+            root.setAttribute('data-theme', initial);
+            btn.innerHTML = initial === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.innerHTML = next === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+        })();
+    </script>
 </body>
 </html>

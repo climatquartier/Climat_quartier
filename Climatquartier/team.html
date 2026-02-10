@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClimatQuartier • Équipe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./assets/css/main.css" />
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-globe-europe"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>ClimatQuartier</h1>
+                    <p>Notre équipe</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a class="nav-btn ghost" href="index.html">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+                <a class="nav-btn ghost" href="documentation.html">
+                    <i class="fas fa-book"></i> Documentation
+                </a>
+                <a class="nav-btn ghost" href="contact.html">
+                    <i class="fas fa-envelope"></i> Contact
+                </a>
+                <button class="nav-btn ghost theme-toggle" id="theme-toggle" aria-label="Changer le thème">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="team-page">
+            <section class="team-card">
+                <div class="team-header">
+                    <h2>Des profils complémentaires</h2>
+                    <p>Recherche, data, urbanisme et communication pour des territoires résilients.</p>
+                </div>
+
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🔬</div>
+                        <h4>Tya Rambault De BARALLON</h4>
+                        <p>Chargé de projet</p>
+                        <small>15 ans d'expérience en modélisation climatique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👩‍💻</div>
+                        <h4>Ambroise DANGUY</h4>
+                        <p>Chargé de projet</p>
+                        <small>Expert en visualisation de données environnementales</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Doriane Martins RIBEIRO</h4>
+                        <p>Chargée de projet</p>
+                        <small>Spécialiste en communication scientifique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Lucas DEVANCOURT</h4>
+                        <p>Chargée de projet</p>
+                        <small>Spécialiste en communication scientifique</small>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-avatar">👨‍🏫</div>
+                        <h4>Gloire MBAMBA</h4>
+                        <p>Chargé de projet</p>
+                        <small>Création d'interfaces utilisateur intuitives</small>
+                    </div>
+                </div>
+
+                <div class="team-actions">
+                    <a class="nav-btn ghost" href="contact.html">
+                        <i class="fas fa-paper-plane"></i> Nous contacter
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('theme-toggle');
+            if (!btn) return;
+            const root = document.documentElement;
+            const stored = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initial = stored || (prefersDark ? 'dark' : 'light');
+            root.setAttribute('data-theme', initial);
+            btn.innerHTML = initial === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+                const next = current === 'dark' ? 'light' : 'dark';
+                root.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.innerHTML = next === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -204,9 +204,10 @@ class ClimatQuartierApp {
         this.currentZone = 'cergy';
         this.currentScenario = 'ssp2';
         this.horizonOptions = [
-            { label: "Aujourd'hui", value: new Date().getFullYear() },
-            { label: "2030", value: 2030 },
-            { label: "2050", value: 2050 }
+            { label: "Aujourd'hui", value: "Actuel" },
+            { label: "2030", value: "2030" },
+            { label: "2050", value: "2050" },
+            { label: "2100", value: "2100" }
         ];
         this.currentHorizon = this.horizonOptions[0].value;
         this.currentLayer = 'temperature';
@@ -247,6 +248,7 @@ class ClimatQuartierApp {
             async init() {
                 try {
                     this.supabase = this.createSupabaseClient();
+                    await this.loadClimateDataset();
                     await this.initializeSupabaseData();
                     this.validateData();
                     await this.initializeMap();
@@ -391,6 +393,10 @@ class ClimatQuartierApp {
                 return window.supabase.createClient(url, key);
             }
 
+            async loadClimateDataset() {
+                this.climateDataset = null;
+            }
+
             async initializeSupabaseData() {
                 if (!this.supabase) return;
 
@@ -428,6 +434,7 @@ class ClimatQuartierApp {
                         const greens = await this.fetchGreenSpaces(zone.id_ville);
                         if (greens) {
                             this.greenSpacesGeoJSON[zoneId] = greens;
+                            this.updateZoneBoundsFromVegetation(zoneId, greens);
                         }
                     }
                 }
@@ -484,9 +491,9 @@ class ClimatQuartierApp {
                 if (!idVille) return fallback;
 
                 const climate = await this.fetchClimateData(idVille, this.currentScenario, this.currentHorizon);
-                const icu = await this.fetchAverage(idVille, 'icu_indicateurs', 'icu_intensite_max');
+                const icu = climate?.icu ?? await this.fetchAverage(idVille, 'icu_indicateurs', 'icu_intensite_max');
                 const pm25 = await this.fetchAverage(idVille, 'atmo_emicons', 'pm25');
-                const vegetation = await this.fetchAverage(idVille, 'icu_typmorpho', 'taux_occup_vegetation');
+                const vegetation = climate?.vegetation ?? await this.fetchAverage(idVille, 'icu_typmorpho', 'taux_occup_vegetation');
 
                 return {
                     ...fallback,
@@ -539,26 +546,58 @@ class ClimatQuartierApp {
             }
 
             async fetchClimateData(idVille, scenario, horizon) {
+                if (!this.supabase) return null;
+                const cityName = this.getCityNameById(idVille);
+                if (!cityName) return null;
+                const yearKey = String(horizon);
+                const scenarioKey = this.mapScenarioToDataset(scenario);
+
                 try {
-                    const scenarioCandidates = this.getScenarioCandidates(scenario);
                     const { data, error } = await this.supabase
                         .schema('appsig')
-                        .from('donnees_tracc')
-                        .select('annee, niveau_scenarii, temp_moy_an, jours_chauds_30, precip_an')
-                        .eq('id_ville', idVille)
-                        .in('niveau_scenarii', scenarioCandidates);
+                        .from('donnees_cc')
+                        .select('city, year, scenario, kpi, value')
+                        .eq('city', cityName)
+                        .eq('year', yearKey)
+                        .eq('scenario', scenarioKey);
                     if (error || !data?.length) return null;
 
-                    const target = this.pickClosestYear(data, horizon);
+                    const byKpi = {};
+                    data.forEach(row => {
+                        const key = row.kpi;
+                        const raw = typeof row.value === 'string' ? row.value.replace(',', '.') : row.value;
+                        const num = Number(raw);
+                        if (Number.isFinite(num)) byKpi[key] = num;
+                    });
+
                     return {
-                        temperature: Number(target.temp_moy_an),
-                        heatwave: Number(target.jours_chauds_30),
-                        precipitation: Number(target.precip_an)
+                        temperature: byKpi['Température moyenne'],
+                        heatwave: byKpi['Jours de canicule'],
+                        precipitation: byKpi['Précipitation'],
+                        icu: byKpi['icu_intensity'],
+                        vegetation: byKpi['vegetalisation']
                     };
                 } catch (err) {
-                    console.warn('Erreur chargement donnees_tracc', err);
+                    console.warn('Erreur chargement donnees_cc', err);
                     return null;
                 }
+            }
+
+            mapScenarioToDataset(scenario) {
+                const s = String(scenario || '').toLowerCase();
+                if (s.startsWith('ssp2')) return 'SSP2';
+                if (s.startsWith('ssp5')) return 'SSP5';
+                return 'TRACC';
+            }
+
+            getCityNameById(idVille) {
+                const map = { 1: 'Annecy', 2: 'Cergy', 3: 'Saint-Malo' };
+                return map[idVille] || null;
+            }
+
+            readKpi(block, key) {
+                const val = block?.[key];
+                return Number.isFinite(val) ? val : (val != null ? Number(val) : null);
             }
 
             getScenarioCandidates(scenario) {
@@ -587,6 +626,7 @@ class ClimatQuartierApp {
 
             async fetchAverage(idVille, table, column) {
                 try {
+                    if (!this.supabase) return null;
                     const { data, error } = await this.supabase
                         .schema('appsig')
                         .from(table)
@@ -814,6 +854,7 @@ class ClimatQuartierApp {
                         this.map.removeLayer(this.greenSpacesLayers[zoneId]);
                     }
                     const scaled = this.scaleGeoJSON(raw, scale);
+                    this.updateZoneBoundsFromVegetation(zoneId, scaled);
                     const layer = L.geoJSON(scaled, {
                         style: {
                             color: '#16a34a',
@@ -829,6 +870,20 @@ class ClimatQuartierApp {
                         } catch {}
                     }
                 });
+            }
+
+            updateZoneBoundsFromVegetation(zoneId, geojson) {
+                try {
+                    if (!geojson || !geojson.features?.length) return;
+                    const layer = L.geoJSON(geojson);
+                    const bounds = layer.getBounds();
+                    if (!bounds.isValid()) return;
+                    const sw = bounds.getSouthWest();
+                    const ne = bounds.getNorthEast();
+                    this.zones[zoneId].bounds = [[sw.lat, sw.lng], [ne.lat, ne.lng]];
+                } catch (err) {
+                    console.warn('Erreur bounds vegetation', err);
+                }
             }
 
             getGreenSpaceScale() {
@@ -1286,78 +1341,126 @@ class ClimatQuartierApp {
 
             updateChart() {
                 try {
-                    const ctx = document.getElementById('tempChart').getContext('2d');
-                    const data = this.zones[this.currentZone];
-                    const horizons = [2030, 2050, 2100];
-                    
+                    const canvas = document.getElementById('tempChart');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    const city = this.zones[this.currentZone];
+                    const { kpi, label, unit } = this.getSelectedIndicatorMeta();
+                    if (!kpi) return;
+
                     if (this.tempChart) {
                         this.tempChart.destroy();
                     }
 
-                    const ssp2Data = horizons.map(horizon => data.simulations.ssp2[horizon].temp);
-                    const ssp5Data = horizons.map(horizon => data.simulations.ssp5[horizon].temp);
+                    Promise.all([
+                        this.fetchChartSeries(city.name, 'SSP2', kpi),
+                        this.fetchChartSeries(city.name, 'SSP5', kpi)
+                    ]).then((series) => {
+                        const labels = series[0].labels;
+                        const valuesSsp2 = series[0].values;
+                        const valuesSsp5 = series[1].values;
 
-                    this.tempChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: horizons,
-                            datasets: [
-                                {
-                                    label: 'SSP2-4.5 (Modéré)',
-                                    data: ssp2Data,
-                                    borderColor: '#1A6153',
-                                    backgroundColor: 'rgba(26, 97, 83, 0.1)',
-                                    borderWidth: 3,
-                                    tension: 0.4,
-                                    fill: true
+                            this.tempChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [
+                                        {
+                                            label: 'SSP2-4.5',
+                                            data: valuesSsp2,
+                                            borderColor: '#1A6153',
+                                            backgroundColor: 'rgba(26, 97, 83, 0.1)',
+                                            borderWidth: 3,
+                                            tension: 0.35,
+                                            fill: true
+                                        },
+                                        {
+                                            label: 'SSP5-8.5',
+                                            data: valuesSsp5,
+                                            borderColor: '#ef4444',
+                                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                            borderWidth: 3,
+                                            tension: 0.35,
+                                            fill: true
+                                        }
+                                    ]
                                 },
-                                {
-                                    label: 'SSP5-8.5 (Extrême)',
-                                    data: ssp5Data,
-                                    borderColor: '#ef4444',
-                                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                    borderWidth: 3,
-                                    tension: 0.4,
-                                    fill: true
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                title: {
-                                    display: true,
-                                    text: `Projection des températures - ${data.name}`,
-                                    font: { size: 16, weight: 'bold' }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return `${context.dataset.label}: ${context.parsed.y}°C`;
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        title: {
+                                            display: true,
+                                            text: `Projection ${label} - ${city.name}`,
+                                            font: { size: 16, weight: 'bold' }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: false,
+                                            title: {
+                                                display: true,
+                                                text: unit ? `${label} (${unit})` : label
+                                            }
+                                        },
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Horizon'
+                                            }
                                         }
                                     }
                                 }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: false,
-                                    title: {
-                                        display: true,
-                                        text: 'Température (°C)'
-                                    }
-                                },
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Horizon'
-                                    }
-                                }
-                            }
-                        }
-                    });
+                            });
+                        }).catch(err => {
+                            console.error('Erreur lors de la mise à jour du graphique:', err);
+                        });
                 } catch (error) {
                     console.error('Erreur lors de la mise à jour du graphique:', error);
                 }
+            }
+
+            getSelectedIndicatorMeta() {
+                const active = document.querySelector('.indicator-card.active');
+                const indicator = active?.dataset?.indicator || 'temp';
+                const map = {
+                    temp: { kpi: 'Température moyenne', label: 'Température moyenne', unit: '°C' },
+                    heatwave: { kpi: 'Jours de canicule', label: 'Jours de canicule', unit: 'jours' },
+                    precipitation: { kpi: 'Précipitation', label: 'Précipitation', unit: 'mm' },
+                    icu: { kpi: 'icu_intensity', label: 'Îlot de chaleur', unit: '°C' },
+                    vegetation: { kpi: 'vegetalisation', label: 'Végétalisation', unit: '%' }
+                };
+                return map[indicator] || map.temp;
+            }
+
+            async fetchChartSeries(cityName, scenarioKey, kpi) {
+                if (!this.supabase) {
+                    return { labels: ['Aujourd\'hui', '2030', '2050', '2100'], values: [0, 0, 0, 0] };
+                }
+                const { data, error } = await this.supabase
+                    .schema('appsig')
+                    .from('donnees_cc')
+                    .select('year, value')
+                    .eq('city', cityName)
+                    .eq('scenario', scenarioKey)
+                    .eq('kpi', kpi);
+
+                if (error || !data?.length) {
+                    return { labels: ['Aujourd\'hui', '2030', '2050', '2100'], values: [0, 0, 0, 0] };
+                }
+
+                const yearOrder = ['Actuel', '2030', '2050', '2100'];
+                const yearLabels = { Actuel: "Aujourd'hui", '2030': '2030', '2050': '2050', '2100': '2100' };
+                const valuesByYear = {};
+                data.forEach(row => {
+                    const raw = typeof row.value === 'string' ? row.value.replace(',', '.') : row.value;
+                    const num = Number(raw);
+                    if (Number.isFinite(num)) valuesByYear[String(row.year)] = num;
+                });
+
+                return {
+                    labels: yearOrder.map(y => yearLabels[y]),
+                    values: yearOrder.map(y => valuesByYear[y] ?? null)
+                };
             }
 
 
@@ -1445,6 +1548,7 @@ class ClimatQuartierApp {
                     card.addEventListener('click', (e) => {
                         document.querySelectorAll('.indicator-card').forEach(c => c.classList.remove('active'));
                         e.currentTarget.classList.add('active');
+                        this.updateChart();
                     });
                 });
 

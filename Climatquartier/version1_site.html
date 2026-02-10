@@ -59,6 +59,7 @@
                         <li><a class="nav-link" data-page="apropos">À propos</a></li>
 						<li><a class="nav-link" data-page="cartographie">Cartographie</a></li>
                         <li><a class="nav-link" data-page="methodologie">Méthodologie</a></li>
+                        <li><a class="nav-link" data-page="equipe">Équipe</a></li>
                         <li><a class="nav-link" data-page="contact">Contact</a></li>
 						
 						<li>
@@ -113,6 +114,10 @@
                 <button class="btn" onclick="showPage('cartographie')">Découvrir la cartographie interactive</button>
             </section>
 
+            <div class="team-link">
+                <button class="btn btn-secondary" onclick="showPage('equipe')">Rencontrer l'équipe</button>
+            </div>
+
             </div> <!-- fermeture tabs-container -->
         </div>
     </div>
@@ -165,12 +170,25 @@
                 </div>
             </section>
 
+            <div class="team-link">
+                <button class="btn btn-secondary" onclick="showPage('equipe')">Découvrir l'équipe</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PAGE EQUIPE ===== -->
+    <div id="equipe" class="page">
+        <div class="container">
+            <div class="hero">
+                <h2>Notre Équipe</h2>
+                <p>Des profils complémentaires au service des territoires résilients</p>
+            </div>
+
             <section class="content-section">
-                <h3>Notre Équipe</h3>
                 <div class="team-grid">
                     <div class="team-member">
                         <div class="member-avatar">👨‍🔬</div>
-                        <h4>Tya Rambault De BARALLON </h4>
+                        <h4>Tya Rambault De BARALLON</h4>
                         <p>Chargé de projet</p>
                         <small>15 ans d'expérience en modélisation climatique</small>
                     </div>
@@ -200,6 +218,10 @@
                     </div>
                 </div>
             </section>
+
+            <div class="team-link">
+                <button class="btn" onclick="showPage('contact')">Nous contacter</button>
+            </div>
         </div>
     </div>
 
@@ -218,6 +240,9 @@
             <div class="hero">
                 <h2>Notre Méthodologie</h2>
                 <p>Découvrez comment nous produisons et analysons les données climatiques</p>
+                <div class="team-link">
+                    <button class="btn btn-secondary" onclick="showPage('equipe')">Voir l'équipe</button>
+                </div>
             </div>
 
             <section class="methodology-steps">
@@ -293,6 +318,9 @@
 				<div class="hero" style="margin: 2rem;">
 					<h2>Cartographie Interactive</h2>
 					<p>Explorez les données climatiques dynamiques de votre territoire.</p>
+                    <div class="team-link">
+                        <button class="btn btn-secondary" onclick="showPage('equipe')">Rencontrer l'équipe</button>
+                    </div>
 				</div>
 
 				<div id="map-integration-zone" style="height: 80vh; background-color: #eee; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc; margin: 2rem;">
@@ -311,6 +339,10 @@
 <!-- ====================== ONGLET DOCUMENTATION ====================== -->
     <div class="method-tab-content" id="doc-content">
         <div class="container documentation-container">
+
+            <div class="team-link">
+                <button class="btn btn-secondary" onclick="showPage('equipe')">Voir l'équipe</button>
+            </div>
 
         </div>
     </div>
@@ -336,6 +368,9 @@
             <div class="hero">
                 <h2>Contactez-nous</h2>
                 <p>Une question ? Un projet ? Nous sommes à votre écoute !</p>
+                <div class="team-link">
+                    <button class="btn btn-secondary" onclick="showPage('equipe')">Découvrir l'équipe</button>
+                </div>
             </div>
 
             <div class="contact-grid">
