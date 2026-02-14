@@ -40,6 +40,13 @@
         [data-theme="dark"] body {
             background: linear-gradient(135deg, #0b2f2a 0%, #0f3d36 100%);
         }
+		
+		/* Utilisation de dvh pour prendre en compte la barre d'adresse mobile */
+		body, .app-container {
+			height: 100vh; /* Fallback */
+			height: 100dvh; /* Fix moderne pour iOS */
+			min-height: -webkit-fill-available; /* Fix ancien iOS */
+		}
 
         .app-container {
             display: grid;
@@ -1222,6 +1229,29 @@
             border-radius: 4px;
             border: 1px solid rgba(0, 0, 0, 0.2);
         }
+		
+		.legend-gradient {
+			height: 10px;
+			width: 100%;
+			border-radius: 5px;
+			margin-bottom: 5px;
+			border: 1px solid rgba(0,0,0,0.1);
+		}
+
+		.legend-labels {
+			display: flex;
+			justify-content: space-between;
+			font-size: 0.7rem;
+			color: var(--gray);
+		}
+
+		.legend-section-title {
+			font-weight: bold;
+			font-size: 0.8rem;
+			margin-top: 8px;
+			margin-bottom: 4px;
+			color: var(--dark);
+		}
 
         /* Panel d'information */
         .info-panel {
@@ -1851,6 +1881,7 @@
             font-size: 0.9rem;
         }
 		
+		/* Plein écran */
 		.fullscreen-toggle {
 			position: absolute;
 			top: 1rem;
@@ -1871,9 +1902,10 @@
 		}
 
 		.fullscreen-toggle:hover {
-			transform: translateY(-1px);
-			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
-			background: #f0f9f7;
+			background-color: #ffffff !important; /* Reste blanc */
+			color: var(--primary) !important;     /* L'icône reste verte */
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important; /* On garde juste l'ombre */
+			transform: translateY(-2px);
 		}
 
 		[data-theme="dark"] .fullscreen-toggle {
@@ -1882,7 +1914,9 @@
 			color: #e2e8f0;
 		}
 		[data-theme="dark"] .fullscreen-toggle:hover {
-			background: rgba(255, 255, 255, 0.1);
+			background-color: #1f2937 !important; /* Gris anthracite solide */
+			border-color: rgba(255, 255, 255, 0.5) !important;
+			color: #ffffff !important;
 		}
 
 		:fullscreen .map-container {
@@ -1949,3 +1983,48 @@
                 display: none;
             }
         }
+		
+			/* Export graphique */
+			.chart-export-btn {
+				position: absolute;
+				top: 1rem;
+				right: 1.5rem; 
+				z-index: 10; 
+				
+				background: rgba(255, 255, 255, 0.8);
+				border: 1px solid #e2e8f0;
+				border-radius: 8px;
+				padding: 0.5rem 0.8rem;
+				font-size: 0.85rem;
+				font-weight: 600;
+				color: var(--primary);
+				cursor: pointer;
+				transition: all 0.2s ease;
+				backdrop-filter: blur(4px); 
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+			}
+
+			.chart-export-btn:hover {
+				background: white;
+				transform: translateY(-1px);
+				box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+			}
+
+			[data-theme="dark"] .chart-export-btn {
+				background: rgba(30, 41, 59, 0.7);
+				border-color: rgba(148, 163, 184, 0.2);
+				color: #e2e8f0;
+			}
+
+			[data-theme="dark"] .chart-export-btn:hover {
+				background: rgba(30, 41, 59, 1);
+				border-color: var(--primary);
+			}
+
+			@media (max-width: 640px) {
+				.chart-export-btn .btn-text {
+					display: none;
+				}
+			}

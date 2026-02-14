@@ -7,6 +7,7 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
     
@@ -396,9 +397,13 @@
         </div>
 
         <!-- Graphique -->
-        <div class="chart-container">
-            <canvas id="tempChart"></canvas>
-        </div>
+		<div class="chart-container" style="position: relative;">
+			<button id="exportPdfBtn" class="chart-export-btn" title="Exporter en PDF">
+				<i class="fas fa-file-pdf"></i> <span class="btn-text">Export PDF</span>
+			</button>
+			
+			<canvas id="tempChart"></canvas>
+		</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

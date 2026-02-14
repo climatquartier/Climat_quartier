@@ -776,6 +776,8 @@ class ClimatQuartierApp {
                     if (clickedBtn) clickedBtn.classList.remove('active');
                     console.log('Couche Végétation désactivée');
                 }
+				
+				this.updateLegend();
             }
 
             toggleImpermeabilityLayer(button) {
@@ -1224,6 +1226,7 @@ class ClimatQuartierApp {
                     this.updateScenarioTabs();
                     this.updateCityButtons();
                     this.updateChart();
+					this.updateLegend();
                     this.updateOverlay();
                     this.updateTerritoryLayers();
                 } catch (error) {
@@ -1300,6 +1303,55 @@ class ClimatQuartierApp {
                 } catch (error) {
                     console.error('Erreur lors de la mise à jour de la carte:', error);
                 }
+            }
+			
+			updateLegend() {
+                const legendContainer = document.querySelector('.map-legend');
+                if (!legendContainer) return;
+
+                let content = `<div class="legend-title">Légende</div>`;
+
+                // 1. Définir les couleurs des villes (correspondant à votre CSS/JS)
+                const cityColors = {
+                    'annecy': '#e74c3c',    // Rouge
+                    'cergy': '#2ecc71',     // Vert
+                    'saintmalo': '#3498db'  // Bleu
+                };
+
+                // 2. Afficher UNIQUEMENT la ville en cours de consultation (Focus)
+                if (this.currentZone && this.zones[this.currentZone]) {
+                    const color = cityColors[this.currentZone] || '#333';
+                    const name = this.zones[this.currentZone].name;
+                    
+                    content += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: ${color}; opacity: 0.6;"></div>
+                            <span>Territoire : ${name}</span>
+                        </div>
+                    `;
+                }
+
+                // 3. Afficher la Végétation UNIQUEMENT si la couche est active
+                if (this.vegetationLayerActive) {
+                    content += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #22c55e; border: 1px solid #16a34a;"></div>
+                            <span>Zones de végétation</span>
+                        </div>
+                    `;
+                }
+                
+                // (Optionnel) Si la couche Imperméabilité est active (si vous l'utilisez encore)
+                if (this.impermeabilityLayerActive) {
+                     content += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #f97316;"></div>
+                            <span>Zones imperméables</span>
+                        </div>
+                    `;
+                }
+
+                legendContainer.innerHTML = content;
             }
 
             updateOverlay() {
@@ -1478,6 +1530,45 @@ class ClimatQuartierApp {
                     values: yearOrder.map(y => valuesByYear[y] ?? null)
                 };
             }
+			
+			async exportChartToPDF() {
+                const { jsPDF } = window.jspdf;
+                const canvas = document.getElementById('tempChart');
+                
+                if (!canvas) return;
+
+                // Créer une image du graphique
+                const canvasImage = canvas.toDataURL('image/png', 1.0);
+
+                // Créer le PDF (Orientation paysage pour mieux voir le graph)
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // Titre
+                pdf.setFontSize(16);
+                pdf.setTextColor(26, 97, 83); // Votre vert #1A6153
+                pdf.text(`Rapport Simulation : ${this.zones[this.currentZone].name}`, 15, 20);
+
+                // Sous-titre
+                pdf.setFontSize(12);
+                pdf.setTextColor(100);
+                pdf.text(`Scénario : ${this.currentScenario.toUpperCase()} | Horizon : ${this.getHorizonLabel()}`, 15, 30);
+
+                // Ajouter l'image du graphique
+                // (x, y, width, height) - A4 paysage fait 297x210mm
+                pdf.addImage(canvasImage, 'PNG', 15, 40, 260, 120);
+
+                // Ajouter un petit pied de page
+                pdf.setFontSize(10);
+                pdf.setTextColor(150);
+                pdf.text(`Généré par ClimatQuartier le ${new Date().toLocaleDateString()}`, 15, 180);
+
+                // Télécharger
+                pdf.save(`ClimatQuartier_${this.zones[this.currentZone].name}_Report.pdf`);
+            }
 
 
             setupEventListeners() {
@@ -1551,6 +1642,13 @@ class ClimatQuartierApp {
                         });
                     }
                 };
+				
+				const pdfBtn = document.getElementById('exportPdfBtn');
+				if (pdfBtn) {
+					pdfBtn.addEventListener('click', () => {
+						this.exportChartToPDF();
+					});
+				}
 
                 document.querySelectorAll('.scenario-option').forEach(element => {
                     element.addEventListener('click', scenarioHandler);
@@ -1609,7 +1707,13 @@ class ClimatQuartierApp {
                     card.addEventListener('click', (e) => {
                         document.querySelectorAll('.indicator-card').forEach(c => c.classList.remove('active'));
                         e.currentTarget.classList.add('active');
+						
+						const newLayer = e.currentTarget.dataset.indicator;
+						this.currentLayer = newLayer;
+					
                         this.updateChart();
+						this.updateTerritoryLayers();
+						this.updateLegend();
                     });
                 });
 
