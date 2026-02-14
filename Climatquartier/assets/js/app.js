@@ -741,36 +741,39 @@ class ClimatQuartierApp {
             // Fonctions de contrôle des couches
             toggleCommuneLayer(communeId) {
                 const layer = this.communeLayers[communeId];
-                const buttons = document.querySelectorAll('.layer-toggle .toggle-btn');
-                const button = buttons[Object.keys(this.communesConfig).indexOf(communeId)];
+                
+                // NOUVEAU : On détecte l'élément cliqué (la div .toggle-btn) proprement
+                // "closest" permet de trouver la div même si on clique sur l'icône ou le texte
+                const clickedBtn = event ? event.target.closest('.toggle-btn') : null;
                 
                 if (layer) {
                     if (this.map.hasLayer(layer)) {
                         this.map.removeLayer(layer);
-                        button.classList.remove('active');
+                        // On enlève le vert
+                        if (clickedBtn) clickedBtn.classList.remove('active');
                     } else {
                         this.map.addLayer(layer);
-                        button.classList.add('active');
+                        // On remet le vert
+                        if (clickedBtn) clickedBtn.classList.add('active');
                     }
                 }
             }
 
-            toggleVegetationLayer(button) {
-                // Récupérer le bouton toggle
-                const btn = document.getElementById('vegToggle');
+            toggleVegetationLayer() {
+                // NOUVEAU : Plus besoin d'ID 'vegToggle', on utilise le bouton cliqué
+                const clickedBtn = event ? event.target.closest('.toggle-btn') : null;
 
-                // Ajouter une classe de style pour la couche végétation
                 if (!this.vegetationLayerActive) {
+                    // ACTIVER
                     this.showGreenSpacesLayers();
                     this.vegetationLayerActive = true;
-                    btn.classList.add('active');
-                    btn.innerHTML = '<i class="fas fa-toggle-on"></i>';
+                    if (clickedBtn) clickedBtn.classList.add('active');
                     console.log('Couche Végétation activée');
                 } else {
+                    // DÉSACTIVER
                     this.hideGreenSpacesLayers();
                     this.vegetationLayerActive = false;
-                    btn.classList.remove('active');
-                    btn.innerHTML = '<i class="fas fa-toggle-off"></i>';
+                    if (clickedBtn) clickedBtn.classList.remove('active');
                     console.log('Couche Végétation désactivée');
                 }
             }
@@ -934,17 +937,30 @@ class ClimatQuartierApp {
             }
 
             changeBasemap(basemapType) {
-                // Mettre à jour les boutons - cherche dans la section Fond de carte
-                const basemapSection = document.querySelector('.layer-controls .collapsible-section:nth-child(2)');
-                const basemapButtons = basemapSection.querySelectorAll('.toggle-btn');
-                basemapButtons.forEach(btn => btn.classList.remove('active'));
+                // 1. Identifier le bouton cliqué
+                const clickedBtn = event ? event.target.closest('.toggle-btn') : null;
                 
-                // Ajouter la classe active au bouton cliqué
-                event.target.classList.add('active');
+                // 2. Gestion visuelle (Radio boutons : un seul actif à la fois)
+                if (clickedBtn) {
+                    // On trouve le parent (.layer-toggle) pour ne désactiver QUE les voisins
+                    const parentGroup = clickedBtn.closest('.layer-toggle');
+                    if (parentGroup) {
+                        // On éteint tout le monde dans ce groupe
+                        parentGroup.querySelectorAll('.toggle-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                    }
+                    // On allume celui qu'on a cliqué
+                    clickedBtn.classList.add('active');
+                }
                 
-                // Changer la couche de base
-                this.map.removeLayer(this.baseLayers[this.currentBasemap]);
-                this.baseLayers[basemapType].addTo(this.map);
+                // 3. Logique Leaflet (Changement de carte)
+                if (this.baseLayers[this.currentBasemap]) {
+                     this.map.removeLayer(this.baseLayers[this.currentBasemap]);
+                }
+                if (this.baseLayers[basemapType]) {
+                    this.baseLayers[basemapType].addTo(this.map);
+                }
                 this.currentBasemap = basemapType;
             }
 
@@ -1479,6 +1495,51 @@ class ClimatQuartierApp {
                         });
                     }, 100);
                 });
+				
+				// --- AJOUT : Gestion du Plein Écran ---
+                const fullscreenBtn = document.getElementById('fullscreenBtn');
+                const mapContainer = document.querySelector('.map-container');
+
+                if (fullscreenBtn && mapContainer) {
+                    fullscreenBtn.addEventListener('click', () => {
+                        if (!document.fullscreenElement) {
+                            // Entrer en plein écran
+                            if (mapContainer.requestFullscreen) {
+                                mapContainer.requestFullscreen();
+                            } else if (mapContainer.webkitRequestFullscreen) { /* Safari */
+                                mapContainer.webkitRequestFullscreen();
+                            } else if (mapContainer.msRequestFullscreen) { /* IE11 */
+                                mapContainer.msRequestFullscreen();
+                            }
+                        } else {
+                            // Sortir du plein écran
+                            if (document.exitFullscreen) {
+                                document.exitFullscreen();
+                            } else if (document.webkitExitFullscreen) {
+                                document.webkitExitFullscreen();
+                            }
+                        }
+                    });
+
+                    // Écouter le changement d'état (pour changer l'icône même si on fait Echap)
+                    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+                    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+
+                    function updateFullscreenIcon() {
+                        const icon = fullscreenBtn.querySelector('i');
+                        if (document.fullscreenElement) {
+                            // On est en plein écran -> icône "réduire"
+                            icon.classList.remove('fa-expand');
+                            icon.classList.add('fa-compress');
+                            fullscreenBtn.title = "Quitter le plein écran";
+                        } else {
+                            // On est normal -> icône "agrandir"
+                            icon.classList.remove('fa-compress');
+                            icon.classList.add('fa-expand');
+                            fullscreenBtn.title = "Plein écran";
+                        }
+                    }
+                }
 
                 // Gestionnaire unique pour les scénarios
                 const scenarioHandler = (e) => {

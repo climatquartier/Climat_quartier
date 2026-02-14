@@ -482,6 +482,17 @@
         .btn-secondary:hover {
             border-color: var(--primary);
         }
+		
+		[data-theme="dark"] .btn-secondary {
+			background-color: transparent;
+			color: #ffffff;
+			border: 1px solid rgba(255, 255, 255, 0.4);
+		}
+
+		[data-theme="dark"] .btn-secondary:hover {
+			background-color: rgba(255, 255, 255, 0.1);
+			border-color: #ffffff;
+		}
 
         /* Carte */
         .map-container {
@@ -565,6 +576,12 @@
             transform: translateY(-6px);
             transition: opacity 0.2s ease, transform 0.2s ease;
         }
+		
+		[data-theme="dark"] .layer-controls{
+			background: rgba(15, 23, 42, 0.95); 
+			border-color: rgba(148, 163, 184, 0.2); 
+			color: #e2e8f0;
+		}
 
         .layer-controls.open {
             opacity: 1;
@@ -908,6 +925,12 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+		
+		[data-theme="dark"] .chart-container{
+			background: rgba(15, 23, 42, 0.95); 
+			border-color: rgba(148, 163, 184, 0.2); 
+			color: #e2e8f0;
+		}
 
         /* Contrôles de couches améliorés */
         .layer-controls {
@@ -962,6 +985,24 @@
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
+		
+		[data-theme="dark"] .toggle-btn {
+			background: rgba(255, 255, 255, 0.05);
+			border-color: rgba(148, 163, 184, 0.2);
+			color: #e2e8f0;
+		}
+		
+		
+		[data-theme="dark"] .toggle-btn:hover {
+			background: rgba(255, 255, 255, 0.1);
+			border-color: var(--primary);
+		}
+
+		[data-theme="dark"] .toggle-btn.active {
+			background-color: #1A6153; 
+			color: #ffffff;
+			border-color: #3CA58C;
+		}
 
         .basemap-controls {
             margin-top: 1rem;
@@ -1094,6 +1135,12 @@
             z-index: 1000;
             min-width: 240px;
         }
+		
+		[data-theme="dark"] .adaptation-panel{
+			background: rgba(15, 23, 42, 0.95); 
+			border-color: rgba(148, 163, 184, 0.2); 
+			color: #e2e8f0;
+		}
 
         .adaptation-toggle {
             display: flex;
@@ -1147,6 +1194,12 @@
             z-index: 1000;
             min-width: 180px;
         }
+		
+		[data-theme="dark"] .map-legend{
+			background: rgba(15, 23, 42, 0.95); 
+			border-color: rgba(148, 163, 184, 0.2); 
+			color: #e2e8f0;
+		}
 
         .legend-title {
             font-weight: 600;
@@ -1189,6 +1242,12 @@
         .info-panel.active {
             display: block;
         }
+		
+		[data-theme="dark"] .info-panel {
+			background: rgba(15, 23, 42, 0.95); 
+			border-color: rgba(148, 163, 184, 0.2); 
+			color: #e2e8f0;
+		}
 
         .close-btn {
             position: absolute;
@@ -1490,18 +1549,26 @@
             gap: 0.5rem;
         }
 
-        .hero-eyebrow {
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85rem;
-        }
+		.hero-eyebrow {
+			color: #ffffff !important; 
+			font-weight: bold;
+			opacity: 1 !important; 
+		}
+		
+		[data-theme="dark"] .hero-eyebrow {
+			color: #ffffff !important;
+			opacity: 1 !important;
+		}
 
         .hero-title {
             color: white;
             font-size: 1.9rem;
             line-height: 1.2;
         }
+		
+		[data-theme="dark"] .hero-title {
+			color: #ffffff;
+		}
 
         .hero-subtitle {
             color: rgba(255, 255, 255, 0.85);
@@ -1590,6 +1657,25 @@
             color: var(--dark);
             font-weight: 700;
         }
+		
+		.docs-count,
+		.docs-count span {
+			color: #1e293b !important; /* Gris anthracite très lisible */
+			color: #1e293b !important; /* Gris anthracite très lisible */
+			font-weight: 600 !important;
+		}
+
+		/* On met le chiffre "3" en vert pour faire joli (optionnel) */
+		.docs-count span[data-doc-count] {
+			color: #1A6153 !important; /* Vert forêt */
+			font-weight: 800 !important;
+		}
+		
+		[data-theme="dark"] .docs-count,
+		[data-theme="dark"] .docs-count span,
+		[data-theme="dark"] .docs-count span[data-doc-count] {
+			color: #000103 !important; 
+		}
 
         .pill {
             display: inline-flex;
@@ -1602,6 +1688,7 @@
             font-size: 0.85rem;
             letter-spacing: 0.3px;
         }
+		
 
         .docs-grid {
             display: grid;
@@ -1621,6 +1708,12 @@
             gap: 0.6rem;
             transition: all 0.2s ease;
         }
+		
+		
+		[data-theme="dark"] .doc-card {
+			background-color: #1e293b; 
+			border-color: #334155;
+		}
 
         .doc-card:hover {
             transform: translateY(-3px);
@@ -1647,6 +1740,10 @@
             color: var(--accent);
             font-size: 1.05rem;
         }
+		
+		[data-theme="dark"] .doc-title {
+			color: #f1f5f9; 
+		}
 
         .doc-description {
             color: var(--gray);
@@ -1714,6 +1811,12 @@
             border-color: var(--primary);
             box-shadow: 0 10px 20px rgba(26, 97, 83, 0.12);
         }
+		
+		[data-theme="dark"] .doc-description,
+		[data-theme="dark"] .hero-subtitle, 
+		[data-theme="dark"] .hero-eyebrow {
+			color: #cbd5e1; 
+		}
 
         .empty-state {
             margin-top: 1rem;
@@ -1747,6 +1850,52 @@
             color: var(--accent);
             font-size: 0.9rem;
         }
+		
+		.fullscreen-toggle {
+			position: absolute;
+			top: 1rem;
+			right: 4.5rem; 
+			z-index: 500;
+			width: 42px;
+			height: 42px;
+			border-radius: 12px;
+			border: 1px solid rgba(0, 0, 0, 0.08);
+			background: white;
+			color: var(--primary); 
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+			transition: all 0.2s ease;
+		}
+
+		.fullscreen-toggle:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
+			background: #f0f9f7;
+		}
+
+		[data-theme="dark"] .fullscreen-toggle {
+			background: #111827;
+			border-color: rgba(148, 163, 184, 0.2);
+			color: #e2e8f0;
+		}
+		[data-theme="dark"] .fullscreen-toggle:hover {
+			background: rgba(255, 255, 255, 0.1);
+		}
+
+		:fullscreen .map-container {
+			width: 100vw;
+			height: 100vh;
+			border-radius: 0; 
+		}
+
+		::-webkit-full-screen .map-container {
+			width: 100vw;
+			height: 100vh;
+			border-radius: 0;
+		}
 
         /* Responsive */
         @media (max-width: 1200px) {
