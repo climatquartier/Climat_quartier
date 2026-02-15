@@ -1416,6 +1416,15 @@ class ClimatQuartierApp {
                     const { kpi, label, unit } = this.getSelectedIndicatorMeta();
                     if (!kpi) return;
 
+                    // --- AJOUT : GESTION DES COULEURS DARK MODE ---
+                    // On vérifie si le site est en mode sombre
+                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    
+                    // Définition des couleurs
+                    const textColor = isDark ? '#e2e8f0' : '#1e293b'; // Blanc cassé ou Gris foncé
+                    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'; // Grille subtile
+                    // ----------------------------------------------
+
                     if (this.tempChart) {
                         this.tempChart.destroy();
                     }
@@ -1428,60 +1437,73 @@ class ClimatQuartierApp {
                         const valuesSsp2 = series[0].values;
                         const valuesSsp5 = series[1].values;
 
-                            this.tempChart = new Chart(ctx, {
-                                type: 'line',
-                                data: {
-                                    labels,
-                                    datasets: [
-                                        {
-                                            label: 'SSP2-4.5',
-                                            data: valuesSsp2,
-                                            borderColor: '#1A6153',
-                                            backgroundColor: 'rgba(26, 97, 83, 0.1)',
-                                            borderWidth: 3,
-                                            tension: 0.35,
-                                            fill: true
-                                        },
-                                        {
-                                            label: 'SSP5-8.5',
-                                            data: valuesSsp5,
-                                            borderColor: '#ef4444',
-                                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                            borderWidth: 3,
-                                            tension: 0.35,
-                                            fill: true
+                        this.tempChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels,
+                                datasets: [
+                                    {
+                                        label: 'SSP2-4.5',
+                                        data: valuesSsp2,
+                                        borderColor: '#1A6153',
+                                        backgroundColor: 'rgba(26, 97, 83, 0.1)',
+                                        borderWidth: 3,
+                                        tension: 0.35,
+                                        fill: true
+                                    },
+                                    {
+                                        label: 'SSP5-8.5',
+                                        data: valuesSsp5,
+                                        borderColor: '#ef4444',
+                                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                        borderWidth: 3,
+                                        tension: 0.35,
+                                        fill: true
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false, // Permet au graph de bien remplir l'espace
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: `Projection ${label} - ${city.name}`,
+                                        color: textColor, // <--- Couleur Titre
+                                        font: { size: 16, weight: 'bold' }
+                                    },
+                                    legend: {
+                                        labels: {
+                                            color: textColor // <--- Couleur Légende
                                         }
-                                    ]
+                                    }
                                 },
-                                options: {
-                                    responsive: true,
-                                    plugins: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        ticks: { color: textColor }, // <--- Couleur Chiffres Y
+                                        grid: { color: gridColor },  // <--- Couleur Grille Y
                                         title: {
                                             display: true,
-                                            text: `Projection ${label} - ${city.name}`,
-                                            font: { size: 16, weight: 'bold' }
+                                            text: unit ? `${label} (${unit})` : label,
+                                            color: textColor // <--- Couleur Titre Axe Y
                                         }
                                     },
-                                    scales: {
-                                        y: {
-                                            beginAtZero: false,
-                                            title: {
-                                                display: true,
-                                                text: unit ? `${label} (${unit})` : label
-                                            }
-                                        },
-                                        x: {
-                                            title: {
-                                                display: true,
-                                                text: 'Horizon'
-                                            }
+                                    x: {
+                                        ticks: { color: textColor }, // <--- Couleur Chiffres X
+                                        grid: { color: gridColor },  // <--- Couleur Grille X
+                                        title: {
+                                            display: true,
+                                            text: 'Horizon',
+                                            color: textColor // <--- Couleur Titre Axe X
                                         }
                                     }
                                 }
-                            });
-                        }).catch(err => {
-                            console.error('Erreur lors de la mise à jour du graphique:', err);
+                            }
                         });
+                    }).catch(err => {
+                        console.error('Erreur lors de la mise à jour du graphique:', err);
+                    });
                 } catch (error) {
                     console.error('Erreur lors de la mise à jour du graphique:', error);
                 }
@@ -1535,21 +1557,46 @@ class ClimatQuartierApp {
                 const { jsPDF } = window.jspdf;
                 const canvas = document.getElementById('tempChart');
                 
-                if (!canvas) return;
+                if (!canvas || !this.tempChart) return;
 
-                // Créer une image du graphique
+                // 1. DÉTECTION ET FORÇAGE DES COULEURS POUR L'IMPRESSION
+                // On vérifie si on est en mode sombre
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                
+                // Si on est en sombre, on force temporairement les couleurs du mode clair (Gris foncé)
+                // pour que ce soit lisible sur le papier blanc du PDF.
+                if (isDark) {
+                    const lightTextColor = '#1e293b';
+                    const lightGridColor = 'rgba(0, 0, 0, 0.1)';
+
+                    // Appliquer aux options du graphique
+                    this.tempChart.options.plugins.title.color = lightTextColor;
+                    this.tempChart.options.plugins.legend.labels.color = lightTextColor;
+                    
+                    this.tempChart.options.scales.x.ticks.color = lightTextColor;
+                    this.tempChart.options.scales.x.title.color = lightTextColor;
+                    this.tempChart.options.scales.x.grid.color = lightGridColor;
+
+                    this.tempChart.options.scales.y.ticks.color = lightTextColor;
+                    this.tempChart.options.scales.y.title.color = lightTextColor;
+                    this.tempChart.options.scales.y.grid.color = lightGridColor;
+
+                    // Mise à jour INSTANTANÉE (sans animation)
+                    this.tempChart.update('none');
+                }
+
+                // 2. GÉNÉRATION DU PDF (Votre code habituel)
                 const canvasImage = canvas.toDataURL('image/png', 1.0);
 
-                // Créer le PDF (Orientation paysage pour mieux voir le graph)
                 const pdf = new jsPDF({
                     orientation: 'landscape',
                     unit: 'mm',
                     format: 'a4'
                 });
 
-                // Titre
+                // Titre du PDF
                 pdf.setFontSize(16);
-                pdf.setTextColor(26, 97, 83); // Votre vert #1A6153
+                pdf.setTextColor(26, 97, 83);
                 pdf.text(`Rapport Simulation : ${this.zones[this.currentZone].name}`, 15, 20);
 
                 // Sous-titre
@@ -1557,17 +1604,34 @@ class ClimatQuartierApp {
                 pdf.setTextColor(100);
                 pdf.text(`Scénario : ${this.currentScenario.toUpperCase()} | Horizon : ${this.getHorizonLabel()}`, 15, 30);
 
-                // Ajouter l'image du graphique
-                // (x, y, width, height) - A4 paysage fait 297x210mm
+                // Image du graphique
                 pdf.addImage(canvasImage, 'PNG', 15, 40, 260, 120);
 
-                // Ajouter un petit pied de page
+                // Pied de page
                 pdf.setFontSize(10);
                 pdf.setTextColor(150);
                 pdf.text(`Généré par ClimatQuartier le ${new Date().toLocaleDateString()}`, 15, 180);
 
-                // Télécharger
                 pdf.save(`ClimatQuartier_${this.zones[this.currentZone].name}_Report.pdf`);
+
+                // 3. RESTAURATION DES COULEURS (Si on était en mode sombre)
+                if (isDark) {
+                    const darkTextColor = '#e2e8f0';
+                    const darkGridColor = 'rgba(255, 255, 255, 0.1)';
+
+                    this.tempChart.options.plugins.title.color = darkTextColor;
+                    this.tempChart.options.plugins.legend.labels.color = darkTextColor;
+                    
+                    this.tempChart.options.scales.x.ticks.color = darkTextColor;
+                    this.tempChart.options.scales.x.title.color = darkTextColor;
+                    this.tempChart.options.scales.x.grid.color = darkGridColor;
+
+                    this.tempChart.options.scales.y.ticks.color = darkTextColor;
+                    this.tempChart.options.scales.y.title.color = darkTextColor;
+                    this.tempChart.options.scales.y.grid.color = darkGridColor;
+
+                    this.tempChart.update('none');
+                }
             }
 
 
@@ -1586,6 +1650,19 @@ class ClimatQuartierApp {
                         });
                     }, 100);
                 });
+				
+				// Écouter le changement de thème pour rafraîchir le graphique
+                const themeBtn = document.getElementById('theme-toggle');
+                if (themeBtn) {
+                    themeBtn.addEventListener('click', () => {
+                        // On attend un tout petit peu que le CSS change, puis on redessine le graph
+                        setTimeout(() => {
+                            this.updateChart();
+                            // Optionnel : on met aussi à jour la légende de la carte pour être sûr
+                            this.updateLegend(); 
+                        }, 100);
+                    });
+                }
 				
 				// --- AJOUT : Gestion du Plein Écran ---
                 const fullscreenBtn = document.getElementById('fullscreenBtn');

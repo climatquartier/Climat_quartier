@@ -165,6 +165,78 @@
             color: #93c5fd;
             text-decoration: underline;
         }
+		
+		/* Tooltip métadonnées indicateurs simulés */
+		.indicator-title-row {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+
+		.meta-icon {
+			color: var(--gray);
+			font-size: 0.8rem;
+			cursor: help;
+			opacity: 0.6;
+			transition: all 0.2s ease;
+			position: relative; 
+		}
+
+		.meta-icon:hover {
+			opacity: 1;
+			color: var(--primary);
+		}
+
+		.meta-tooltip {
+			position: absolute;
+			bottom: 140%; 
+			left: 50%;
+			transform: translateX(-50%);
+			
+			width: 220px;
+			padding: 0.8rem;
+			background: rgba(30, 41, 59, 0.98);
+			color: white;
+			font-size: 0.75rem;
+			line-height: 1.4;
+			border-radius: 8px;
+			font-weight: 400;
+			
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+			transition: all 0.2s ease;
+			z-index: 100;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+			text-align: left;
+		}
+
+		.meta-tooltip::after {
+			content: '';
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			margin-left: -5px;
+			border-width: 5px;
+			border-style: solid;
+			border-color: rgba(30, 41, 59, 0.98) transparent transparent transparent;
+		}
+
+		.meta-icon:hover .meta-tooltip {
+			opacity: 1;
+			visibility: visible;
+			bottom: 120%; 
+		}
+
+		.meta-tooltip strong {
+			color: #60a5fa;
+			display: block;
+			margin-bottom: 2px;
+			margin-top: 6px;
+		}
+		.meta-tooltip strong:first-child {
+			margin-top: 0;
+		}
 
         /* Layout principal */
         .main-content {
@@ -922,22 +994,29 @@
         .change-up { color: var(--danger); }
         .change-down { color: var(--success); }
 
-        /* Graphique */
-        .chart-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 1.5rem;
-            margin: 0 1rem 1rem 1rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-		
-		[data-theme="dark"] .chart-container{
-			background: rgba(15, 23, 42, 0.95); 
-			border-color: rgba(148, 163, 184, 0.2); 
-			color: #e2e8f0;
+		/* Graphique */
+		.chart-container {
+			background: rgba(255, 255, 255, 0.95);
+			backdrop-filter: blur(20px);
+			border-radius: 20px;
+			padding: 1.5rem;
+			margin: 0 1rem 1rem 1rem;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			
+			height: 500px;     
+			min-height: 500px; 
+			position: relative; 
+			display: flex;     
+			flex-direction: column;
 		}
+
+		/* Ajustement pour le mode sombre */
+		[data-theme="dark"] .chart-container {
+			background: rgba(15, 23, 42, 0.95); /* Fond sombre */
+			border-color: rgba(148, 163, 184, 0.2);
+		}
+		
 
         /* Contrôles de couches améliorés */
         .layer-controls {

@@ -312,87 +312,136 @@
                     <span>INDICATEURS SIMULÉS</span>
                 </div>
                 
-                <div class="indicators-grid">
-                    <div class="indicator-card active" data-indicator="temp">
-                        <div class="indicator-header">
-                            <div class="indicator-icon temp-icon">
-                                <i class="fas fa-thermometer-half"></i>
-                            </div>
-                            <div class="indicator-info">
-                                <div class="indicator-name">Température moyenne</div>
-                                <div class="indicator-desc">Projection annuelle</div>
-                            </div>
-                            <div class="indicator-value">
-                                <div class="value-main">15.2°C</div>
-                                <div class="value-change change-up">+1.4°C</div>
-                            </div>
-                        </div>
-                    </div>
+				<div class="indicators-grid">
+					
+					<div class="indicator-card active" data-indicator="temp">
+						<div class="indicator-header">
+							<div class="indicator-icon temp-icon">
+								<i class="fas fa-thermometer-half"></i>
+							</div>
+							<div class="indicator-info">
+								<div class="indicator-title-row">
+									<div class="indicator-name">Température</div>
+									<div class="meta-icon">
+										<i class="fas fa-info-circle"></i>
+										<div class="meta-tooltip">
+											<strong>Source :</strong> DRIAS / Météo-France
+											<strong>Référence :</strong> Moyenne 1976-2005
+											<strong>Calcul :</strong> Moyenne annuelle lissée sur 30 ans.
+										</div>
+									</div>
+								</div>
+								<div class="indicator-desc">Moyenne annuelle</div>
+							</div>
+							<div class="indicator-value">
+								<div class="value-main">15.2°C</div>
+								<div class="value-change change-up">+1.4°C</div>
+							</div>
+						</div>
+					</div>
 
-                    <div class="indicator-card" data-indicator="heatwave">
-                        <div class="indicator-header">
-                            <div class="indicator-icon heat-icon">
-                                <i class="fas fa-fire"></i>
-                            </div>
-                            <div class="indicator-info">
-                                <div class="indicator-name">Jours de canicule</div>
-                                <div class="indicator-desc">> 30°C</div>
-                            </div>
-                            <div class="indicator-value">
-                                <div class="value-main">14 jours</div>
-                                <div class="value-change change-up">+6 jours</div>
-                            </div>
-                        </div>
-                    </div>
+					<div class="indicator-card" data-indicator="heatwave">
+						<div class="indicator-header">
+							<div class="indicator-icon heat-icon">
+								<i class="fas fa-fire"></i>
+							</div>
+							<div class="indicator-info">
+								<div class="indicator-title-row">
+									<div class="indicator-name">Canicule</div>
+									<div class="meta-icon">
+										<i class="fas fa-info-circle"></i>
+										<div class="meta-tooltip">
+											<strong>Définition :</strong> Jours avec T° min > 20°C et T° max > 30°C.
+											<strong>Source :</strong> Modèle ALADIN-Climat
+											<strong>Référence :</strong> Historique 2000-2020
+										</div>
+									</div>
+								</div>
+								<div class="indicator-desc">Jours > 30°C</div>
+							</div>
+							<div class="indicator-value">
+								<div class="value-main">14 jours</div>
+								<div class="value-change change-up">+6 jours</div>
+							</div>
+						</div>
+					</div>
 
-                    <div class="indicator-card" data-indicator="precipitation">
-                        <div class="indicator-header">
-                            <div class="indicator-icon rain-icon">
-                                <i class="fas fa-cloud-rain"></i>
-                            </div>
-                            <div class="indicator-info">
-                                <div class="indicator-name">Précipitations</div>
-                                <div class="indicator-desc">Cumul annuel</div>
-                            </div>
-                            <div class="indicator-value">
-                                <div class="value-main">665 mm</div>
-                                <div class="value-change change-down">-5%</div>
-                            </div>
-                        </div>
-                    </div>
+					<div class="indicator-card" data-indicator="precipitation">
+						<div class="indicator-header">
+							<div class="indicator-icon rain-icon">
+								<i class="fas fa-cloud-rain"></i>
+							</div>
+							<div class="indicator-info">
+								<div class="indicator-title-row">
+									<div class="indicator-name">Précipitations</div>
+									<div class="meta-icon">
+										<i class="fas fa-info-circle"></i>
+										<div class="meta-tooltip">
+											<strong>Unité :</strong> Millimètres par an (mm/an)
+											<strong>Tendance :</strong> Variation des cumuls annuels par rapport à la normale 1980-2010.
+										</div>
+									</div>
+								</div>
+								<div class="indicator-desc">Cumul annuel</div>
+							</div>
+							<div class="indicator-value">
+								<div class="value-main">665 mm</div>
+								<div class="value-change change-down">-5%</div>
+							</div>
+						</div>
+					</div>
 
-                    <div class="indicator-card" data-indicator="icu">
-                        <div class="indicator-header">
-                            <div class="indicator-icon urban-icon">
-                                <i class="fas fa-city"></i>
-                            </div>
-                            <div class="indicator-info">
-                                <div class="indicator-name">Îlot de chaleur</div>
-                                <div class="indicator-desc">Intensité ICU</div>
-                            </div>
-                            <div class="indicator-value">
-                                <div class="value-main">2.0°C</div>
-                                <div class="value-change change-up">+0.5°C</div>
-                            </div>
-                        </div>
-                    </div>
+					<div class="indicator-card" data-indicator="icu">
+						<div class="indicator-header">
+							<div class="indicator-icon urban-icon">
+								<i class="fas fa-city"></i>
+							</div>
+							<div class="indicator-info">
+								<div class="indicator-title-row">
+									<div class="indicator-name">Ilôts de chaleur urbains (ICU)</div>
+									<div class="meta-icon">
+										<i class="fas fa-info-circle"></i>
+										<div class="meta-tooltip">
+											<strong>Détail :</strong> Différence de température ville/campagne la nuit.
+											<strong>Impact :</strong> Aggravé par la minéralisation et le manque de végétation.
+										</div>
+									</div>
+								</div>
+								<div class="indicator-desc">Intensité moyenne</div>
+							</div>
+							<div class="indicator-value">
+								<div class="value-main">2.0°C</div>
+								<div class="value-change change-up">+0.5°C</div>
+							</div>
+						</div>
+					</div>
 
-                    <div class="indicator-card" data-indicator="vegetation">
-                        <div class="indicator-header">
-                            <div class="indicator-icon nature-icon">
-                                <i class="fas fa-leaf"></i>
-                            </div>
-                            <div class="indicator-info">
-                                <div class="indicator-name">Végétalisation</div>
-                                <div class="indicator-desc">Couvert végétal</div>
-                            </div>
-                            <div class="indicator-value">
-                                <div class="value-main">27%</div>
-                                <div class="value-change change-down">-3%</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+					<div class="indicator-card" data-indicator="vegetation">
+						<div class="indicator-header">
+							<div class="indicator-icon nature-icon">
+								<i class="fas fa-leaf"></i>
+							</div>
+							<div class="indicator-info">
+								<div class="indicator-title-row">
+									<div class="indicator-name">Végétation</div>
+									<div class="meta-icon">
+										<i class="fas fa-info-circle"></i>
+										<div class="meta-tooltip">
+											<strong>Source :</strong> BD TOPO (IGN)
+											<strong>Calcul :</strong> % de la surface communale couverte par la canopée ou strate herbacée.
+										</div>
+									</div>
+								</div>
+								<div class="indicator-desc">Couvert végétal</div>
+							</div>
+							<div class="indicator-value">
+								<div class="value-main">27%</div>
+								<div class="value-change change-down">-3%</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
             </aside>
         </div>
 
