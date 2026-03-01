@@ -64,29 +64,20 @@ const DENS_DELTA_EV_HAB = [
     { x: 15, y: -12.0 }
 ];
 
-const PERM_DELTA_INFILTRATION = [
+const TRAFIC_DELTA_PM25 = [
     { x: 0, y: 0.0 },
-    { x: 20, y: 30.0 },
-    { x: 40, y: 55.0 },
-    { x: 70, y: 85.0 }
+    { x: 25, y: -15.0 }, // -25% de trafic = -15% de PM2.5
+    { x: 50, y: -35.0 },
+    { x: 100, y: -70.0 } // Piétonisation totale
 ];
-const PERM_DELTA_INONDATIONS = [
+const TRAFIC_DELTA_TEMP = [
     { x: 0, y: 0.0 },
-    { x: 20, y: -25.0 },
-    { x: 40, y: -45.0 },
-    { x: 70, y: -70.0 }
+    { x: 50, y: -0.2 },  // Moins de moteurs = très légère baisse de chaleur locale
+    { x: 100, y: -0.5 }
 ];
-const PERM_DELTA_TEMP = [
+const TRAFIC_DELTA_ICU = [
     { x: 0, y: 0.0 },
-    { x: 20, y: -1.0 },
-    { x: 40, y: -1.8 },
-    { x: 70, y: -3.0 }
-];
-const PERM_DELTA_NAPPES = [
-    { x: 0, y: 0.0 },
-    { x: 20, y: 15.0 },
-    { x: 40, y: 30.0 },
-    { x: 70, y: 55.0 }
+    { x: 100, y: -0.3 }  // Impact mineur sur l'îlot de chaleur
 ];
 
 function interpolate(x, points) {
@@ -158,18 +149,16 @@ function impactDensite(deltaDensitePct, base) {
     };
 }
 
-function impactSolsPermeables(pctPerm, base) {
-    const dInf = interpolate(pctPerm, PERM_DELTA_INFILTRATION);
-    const dInond = interpolate(pctPerm, PERM_DELTA_INONDATIONS);
-    const dT = interpolate(pctPerm, PERM_DELTA_TEMP);
-    const dNapp = interpolate(pctPerm, PERM_DELTA_NAPPES);
+function impactTrafic(baisseTraficPct, base) {
+    const dPM25 = interpolate(baisseTraficPct, TRAFIC_DELTA_PM25);
+    const dT = interpolate(baisseTraficPct, TRAFIC_DELTA_TEMP);
+    const dICU = interpolate(baisseTraficPct, TRAFIC_DELTA_ICU);
 
     return {
         ...base,
-        infiltration: base.infiltration * (1 + dInf / 100),
-        inondations: base.inondations * (1 + dInond / 100),
+        pm25: base.pm25 * (1 + dPM25 / 100),
         temperature: base.temperature + dT,
-        nappes: base.nappes * (1 + dNapp / 100)
+        icu: base.icu + dICU
     };
 }
 
@@ -178,7 +167,7 @@ function appliquerScenarioGlobal(base, params) {
     res = impactVegetalisation(params.nbArbres, res);
     res = impactEspacesVerts(params.deltaEVpct, res);
     res = impactDensite(params.deltaDensitePct, res);
-    res = impactSolsPermeables(params.pctPerm, res);
+    res = impactTrafic(params.baisseTraficPct, res); 
     return res;
 }
 
@@ -219,14 +208,18 @@ class ClimatQuartierApp {
         this.communeLayers = {};
         this.baseLayers = {};
         this.currentBasemap = 'osm';
-        this.vegetationLayerActive = false;
+        this.vegetationLayerActive = true;
         this.impermeabilityLayerActive = false;
-        this.greenSpacesLayerActive = false;
+        this.greenSpacesLayerActive = true;
         this.greenSpacesLayers = {};
         this.greenSpacesGeoJSON = {};
         this.communeGeoJSON = {};
         this.baseIndicators = {};
         this.baseIndicatorsMeta = {};
+		this.administrativeLayerActive = true;
+		this.batiLayerActive = false;
+        this.batiLayers = {};
+        this.batiGeoJSON = {};
         this.idVilleMap = {
             annecy: 1,
             cergy: 2,
@@ -237,7 +230,7 @@ class ClimatQuartierApp {
             nbArbres: 0,
             deltaEVpct: 0,
             deltaDensitePct: 0,
-            pctPerm: 0
+            baisseTraficPct: 0
         };
         this.actionsCacheKey = 'cq_actions_cache_v1';
         this.loadActionsFromCache();
@@ -294,7 +287,7 @@ class ClimatQuartierApp {
                         }).addTo(this.map);
 
                         // Chargement des shapefiles
-                        this.loadAllCommunes();
+                        this.createTerritoryLayers();
                         this.greenSpacesLayerActive = true;
                         setTimeout(() => this.renderGreenSpacesLayers(), 300);
                         resolve();
@@ -397,17 +390,20 @@ class ClimatQuartierApp {
                 this.climateDataset = null;
             }
 
-            async initializeSupabaseData() {
+			async initializeSupabaseData() {
                 if (!this.supabase) return;
 
                 for (const zoneId of Object.keys(this.zones)) {
                     const zone = this.zones[zoneId];
                     const commune = await this.fetchCommuneByName(zone.name);
+                    
                     if (commune) {
                         zone.population = commune.population || zone.population;
                         zone.superficie = commune.superf_cad ? `${commune.superf_cad} ha` : zone.superficie;
                         zone.id_ville = commune.id_ville;
-                        this.communeGeoJSON[zoneId] = this.normalizeGeoJSON(commune.geom, {
+                        
+                        // LE CORRECTIF EST ICI : On lit d'abord geom_geojson (la vue), puis geom en secours
+                        this.communeGeoJSON[zoneId] = this.normalizeGeoJSON(commune.geom_geojson || commune.geom, {
                             name: commune.nom || zone.name,
                             id_ville: commune.id_ville
                         });
@@ -436,6 +432,14 @@ class ClimatQuartierApp {
                             this.greenSpacesGeoJSON[zoneId] = greens;
                             this.updateZoneBoundsFromVegetation(zoneId, greens);
                         }
+						
+						this.fetchBati(zone.id_ville).then(bati => {
+                            if (bati) {
+                                this.batiGeoJSON[zoneId] = bati;
+                                // Si l'utilisateur avait déjà cliqué sur le bouton Bâti pendant le chargement, on l'affiche
+                                if (this.batiLayerActive) this.renderBatiLayers();
+                            }
+                        });
                     }
                 }
 
@@ -444,12 +448,9 @@ class ClimatQuartierApp {
                 }
             }
 
-            async fetchCommuneByName(name) {
+			async fetchCommuneByName(name) {
                 try {
-                    // Prefer GeoJSON view when available
-                    let data = null;
-                    let error = null;
-
+                    // 1. On interroge en priorité la VUE GeoJSON
                     const viewRes = await this.supabase
                         .schema('appsig')
                         .from('communes_geojson')
@@ -458,26 +459,20 @@ class ClimatQuartierApp {
                         .limit(1)
                         .maybeSingle();
 
-                    if (viewRes?.data) {
-                        data = viewRes.data;
-                    } else if (viewRes.error) {
-                        error = viewRes.error;
+                    if (viewRes.data) {
+                        return viewRes.data;
                     }
 
-                    if (!data) {
-                        const tableRes = await this.supabase
-                            .schema('appsig')
-                            .from('communes')
-                            .select('id_ville, nom, population, superf_cad, geom')
-                            .ilike('nom', `%${name}%`)
-                            .limit(1)
-                            .maybeSingle();
-                        data = tableRes.data;
-                        error = tableRes.error;
-                    }
-
-                    if (error) throw error;
-                    return data;
+                    // 2. Si ça échoue (vue inexistante), on tente la table brute
+                    const tableRes = await this.supabase
+                        .schema('appsig')
+                        .from('communes')
+                        .select('id_ville, nom, population, superf_cad, geom')
+                        .ilike('nom', `%${name}%`)
+                        .limit(1)
+                        .maybeSingle();
+                        
+                    return tableRes.data;
                 } catch (err) {
                     console.warn(`Commune introuvable pour ${name}`, err);
                     return null;
@@ -712,6 +707,34 @@ class ClimatQuartierApp {
                     return null;
                 }
             }
+			
+			async fetchBati(idVille) {
+                try {
+                    if (!this.supabase) return null;
+                    
+                    // 1. On interroge la NOUVELLE VUE, et non plus la table brute
+                    const { data, error } = await this.supabase
+                        .schema('appsig')
+                        .from('bati_geojson')         // <-- La vue qu'on vient de créer
+                        .select('geom_geojson')       // <-- La colonne traduite
+                        .eq('id_ville', idVille)
+                        .limit(20000); 
+
+                    if (error || !data?.length) return null;
+
+                    const features = data.map(row => {
+                        // 2. On lit directement le GeoJSON
+                        const geom = this.normalizeGeoJSON(row.geom_geojson);
+                        if (!geom) return [];
+                        return geom.type === 'FeatureCollection' ? geom.features : [];
+                    }).flat().filter(Boolean);
+
+                    return features.length ? { type: 'FeatureCollection', features } : null;
+                } catch (err) {
+                    console.warn('Erreur chargement du bâti', err);
+                    return null;
+                }
+            }
 
             normalizeGeoJSON(raw, props = {}) {
                 if (!raw) return null;
@@ -758,26 +781,78 @@ class ClimatQuartierApp {
                     }
                 }
             }
+			
+			toggleAdministrativeLayer() {
+                const clickedBtn = window.event ? window.event.target.closest('.toggle-btn') : null;
+                this.administrativeLayerActive = !this.administrativeLayerActive;
+                
+                if (clickedBtn) clickedBtn.classList.toggle('active', this.administrativeLayerActive);
+                
+                Object.values(this.areaLayers).forEach(layer => {
+                    if (!layer) return;
+                    if (this.administrativeLayerActive) {
+                        this.map.addLayer(layer); // On force l'ajout
+                    } else {
+                        this.map.removeLayer(layer); // On force le retrait
+                    }
+                });
+            }
+
+            toggleBatiLayer() {
+                const clickedBtn = window.event ? window.event.target.closest('.toggle-btn') : null;
+                this.batiLayerActive = !this.batiLayerActive;
+                
+                if (clickedBtn) clickedBtn.classList.toggle('active', this.batiLayerActive);
+                
+                if (this.batiLayerActive) {
+                    this.renderBatiLayers();
+                } else {
+                    Object.values(this.batiLayers).forEach(layer => {
+                        if (layer) this.map.removeLayer(layer); // On force le retrait
+                    });
+                }
+                this.updateLegend();
+            }
+			
 
             toggleVegetationLayer() {
-                // NOUVEAU : Plus besoin d'ID 'vegToggle', on utilise le bouton cliqué
-                const clickedBtn = event ? event.target.closest('.toggle-btn') : null;
+                const clickedBtn = window.event ? window.event.target.closest('.toggle-btn') : null;
+                
+                this.vegetationLayerActive = !this.vegetationLayerActive;
+                
+                if (clickedBtn) clickedBtn.classList.toggle('active', this.vegetationLayerActive);
 
-                if (!this.vegetationLayerActive) {
-                    // ACTIVER
+                if (this.vegetationLayerActive) {
                     this.showGreenSpacesLayers();
-                    this.vegetationLayerActive = true;
-                    if (clickedBtn) clickedBtn.classList.add('active');
-                    console.log('Couche Végétation activée');
                 } else {
-                    // DÉSACTIVER
                     this.hideGreenSpacesLayers();
-                    this.vegetationLayerActive = false;
-                    if (clickedBtn) clickedBtn.classList.remove('active');
-                    console.log('Couche Végétation désactivée');
                 }
-				
-				this.updateLegend();
+                this.updateLegend();
+            }
+            
+
+            renderBatiLayers() {
+                if (!this.batiLayerActive) return;
+                
+                Object.keys(this.zones).forEach(zoneId => {
+                    const raw = this.batiGeoJSON[zoneId];
+                    if (!raw) return;
+                    
+                    if (this.batiLayers[zoneId]) {
+                        this.map.removeLayer(this.batiLayers[zoneId]);
+                    }
+                    
+                    const layer = L.geoJSON(raw, {
+                        style: {
+                            color: '#475569', // Bordure gris foncé
+                            weight: 1,
+                            fillColor: '#94a3b8', // Remplissage gris clair
+                            fillOpacity: 0.8
+                        }
+                    }).addTo(this.map);
+                    
+                    this.batiLayers[zoneId] = layer;
+                });
             }
 
             toggleImpermeabilityLayer(button) {
@@ -891,11 +966,11 @@ class ClimatQuartierApp {
                 }
             }
 
-            getGreenSpaceScale() {
+			getGreenSpaceScale() {
                 const ev = this.actions.deltaEVpct / 100;
                 const trees = Math.min(this.actions.nbArbres / 20000, 1) * 0.2;
-                const perm = this.actions.pctPerm / 100 * 0.2;
-                const scale = 1 + (ev * 0.6) + trees + perm;
+                // Le trafic routier n'influence pas la taille visuelle de la végétation
+                const scale = 1 + (ev * 0.6) + trees;
                 return Math.max(0.7, Math.min(scale, 2.0));
             }
 
@@ -1043,36 +1118,57 @@ class ClimatQuartierApp {
                     }
                 }, 3000);
             }
-
-            createTerritoryLayers() {
+			
+			createTerritoryLayers() {
+                // 1. Nettoyer l'existant
                 Object.values(this.areaLayers).forEach(layer => {
                     if (layer) this.map.removeLayer(layer);
                 });
                 this.areaLayers = {};
 
+                // 2. Créer les emprises pour chaque zone
                 Object.keys(this.zones).forEach(zone => {
                     const data = this.getDisplayData(zone);
+                    const layerColor = this.getLayerColor(data, this.currentLayer);
                     
-                    const bounds = this.zones[zone].bounds;
-                    const rectangle = L.rectangle(bounds, {
-                        color: this.getLayerColor(data, this.currentLayer),
-                        weight: 2,
-                        fillColor: this.getLayerColor(data, this.currentLayer),
-                        fillOpacity: 0.4,
-                        className: 'territory-layer'
-                    }).addTo(this.map);
+                    let territoryLayer;
 
-                    rectangle.bindPopup(this.createTerritoryPopup(zone, data));
-                    this.areaLayers[zone] = rectangle;
-
-                    const marker = this.createCenterMarker(zone, data);
-                    if (marker) {
-                        this.markers.push(marker);
-                        this.zones[zone].marker = marker;
+                    if (this.communeGeoJSON[zone]) {
+                        // VRAIES LIMITES (GeoJSON de Supabase)
+                        territoryLayer = L.geoJSON(this.communeGeoJSON[zone], {
+                            style: {
+                                color: layerColor,
+                                weight: 2,
+                                fillColor: layerColor,
+                                fillOpacity: 0.3, // Opacité agréable
+                                className: 'territory-layer'
+                            }
+                        });
+                    } else {
+                        // RECTANGLE DE SECOURS (Si erreur)
+                        const bounds = this.zones[zone].bounds;
+                        territoryLayer = L.rectangle(bounds, {
+                            color: layerColor,
+                            weight: 2,
+                            fillColor: layerColor,
+                            fillOpacity: 0.3,
+                            className: 'territory-layer'
+                        });
                     }
+
+                    this.areaLayers[zone] = territoryLayer;
+
+                    // ON AFFICHE SEULEMENT SI LE BOUTON EST ACTIF (Par défaut: true)
+                    if (this.administrativeLayerActive !== false) {
+                        this.administrativeLayerActive = true; 
+                        territoryLayer.addTo(this.map);
+                    }
+
                 });
 
-                this.map.fitBounds(this.zones[this.currentZone].bounds);
+                if (this.zones[this.currentZone] && this.zones[this.currentZone].bounds) {
+                    this.map.fitBounds(this.zones[this.currentZone].bounds);
+                }
             }
 
             createCenterMarker(zone, data) {
@@ -1089,7 +1185,6 @@ class ClimatQuartierApp {
 
                     const marker = L.marker(this.zones[zone].center, { icon }).addTo(this.map);
                     
-                    marker.bindPopup(this.createPopupContent(zone));
                     marker.on('click', () => {
                         this.switchCity(zone);
                     });
@@ -1113,23 +1208,27 @@ class ClimatQuartierApp {
                         if (data.vegetation > 40) return '#16a34a';
                         if (data.vegetation > 25) return '#22c55e';
                         return '#ef4444';
+					case 'pm25':
+                        if (data.pm25 < 10) return '#3b82f6'; // Bleu/Vert (Bon)
+                        if (data.pm25 < 20) return '#f59e0b'; // Orange (Moyen)
+                        return '#ef4444'; 
                     default:
                         return this.getTemperatureColor(data.temp);
                 }
             }
-
-            updateTerritoryLayers() {
+			
+			updateTerritoryLayers() {
                 Object.keys(this.zones).forEach(zone => {
                     const layer = this.areaLayers[zone];
                     if (layer) {
                         const data = this.getDisplayData(zone);
+                        const newColor = this.getLayerColor(data, this.currentLayer);
                         
+                        // Met à jour la couleur du contour et du remplissage
                         layer.setStyle({
-                            color: this.getLayerColor(data, this.currentLayer),
-                            fillColor: this.getLayerColor(data, this.currentLayer)
+                            color: newColor,
+                            fillColor: newColor
                         });
-
-                        layer.setPopupContent(this.createTerritoryPopup(zone, data));
                     }
                 });
             }
@@ -1283,7 +1382,8 @@ class ClimatQuartierApp {
                     'heatwave': v => `${formatSig(v)} jours`,
                     'precipitation': v => `${formatSig(v)} mm`,
                     'icu': v => `${formatSig(v)}°C`,
-                    'vegetation': v => `${formatSig(v)}%`
+                    'vegetation': v => `${formatSig(v)}%`,
+					'pm25': v => `${formatSig(v)} µg/m³`
                 };
                 return formats[indicator] ? formats[indicator](value) : value;
             }
@@ -1314,7 +1414,7 @@ class ClimatQuartierApp {
                 // 1. Définir les couleurs des villes (correspondant à votre CSS/JS)
                 const cityColors = {
                     'annecy': '#e74c3c',    // Rouge
-                    'cergy': '#2ecc71',     // Vert
+                    'cergy': '#8b5cf6',     // Vert
                     'saintmalo': '#3498db'  // Bleu
                 };
 
@@ -1340,6 +1440,15 @@ class ClimatQuartierApp {
                         </div>
                     `;
                 }
+				
+				if (this.batiLayerActive) {
+                    content += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #94a3b8; border: 1px solid #475569;"></div>
+                            <span>Bâtiments (Bâti)</span>
+                        </div>
+                    `;
+                }
                 
                 // (Optionnel) Si la couche Imperméabilité est active (si vous l'utilisez encore)
                 if (this.impermeabilityLayerActive) {
@@ -1354,18 +1463,13 @@ class ClimatQuartierApp {
                 legendContainer.innerHTML = content;
             }
 
-            updateOverlay() {
+			updateOverlay() {
                 try {
-                    document.querySelector('.current-city').textContent = 
-                        `${this.zones[this.currentZone].name} - ${this.zones[this.currentZone].region}`;
-                    
-                    const scenarioLabel = this.currentScenario === 'ssp2' ? 'SSP2-4.5 (Modéré)' : 'SSP5-8.5 (Extrême)';
-                    const horizonLabel = this.getHorizonLabel();
-                    document.querySelector('.scenario-tag').textContent = 
-                        `${scenarioLabel} • Horizon ${horizonLabel}`;
-                    
-                    document.querySelector('.city-description').textContent = 
-                        this.isSimulating ? 'Simulation en cours • Données projetées' : 'Situation actuelle • Données 2025';
+                    // On masque définitivement l'élément HTML du bandeau pour épurer la carte
+                    const overlay = document.querySelector('.map-overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
                 } catch (error) {
                     console.error('Erreur lors de la mise à jour de l\'overlay:', error);
                 }
@@ -1517,15 +1621,17 @@ class ClimatQuartierApp {
                     heatwave: { kpi: 'Jours de canicule', label: 'Jours de canicule', unit: 'jours' },
                     precipitation: { kpi: 'Précipitation', label: 'Précipitation', unit: 'mm' },
                     icu: { kpi: 'icu_intensity', label: 'Îlot de chaleur', unit: '°C' },
-                    vegetation: { kpi: 'vegetalisation', label: 'Végétalisation', unit: '%' }
+                    vegetation: { kpi: 'vegetalisation', label: 'Végétalisation', unit: '%' },
+					pm25: { kpi: 'pm25', label: 'Particules fines (PM2.5)', unit: 'µg/m³' }
                 };
                 return map[indicator] || map.temp;
             }
 
-            async fetchChartSeries(cityName, scenarioKey, kpi) {
+			async fetchChartSeries(cityName, scenarioKey, kpi) {
                 if (!this.supabase) {
                     return { labels: ['Aujourd\'hui', '2030', '2050', '2100'], values: [0, 0, 0, 0] };
                 }
+
                 const { data, error } = await this.supabase
                     .schema('appsig')
                     .from('donnees_cc')
@@ -1534,12 +1640,35 @@ class ClimatQuartierApp {
                     .eq('scenario', scenarioKey)
                     .eq('kpi', kpi);
 
-                if (error || !data?.length) {
-                    return { labels: ['Aujourd\'hui', '2030', '2050', '2100'], values: [0, 0, 0, 0] };
-                }
-
                 const yearOrder = ['Actuel', '2030', '2050', '2100'];
                 const yearLabels = { Actuel: "Aujourd'hui", '2030': '2030', '2050': '2050', '2100': '2100' };
+
+                if (error || !data?.length) {
+                    // --- NOUVEAU : GÉNÉRATEUR INTELLIGENT POUR PM2.5 ---
+                    // Si Supabase n'a pas les projections PM2.5, on les simule logiquement
+                    if (kpi === 'pm25') {
+                        // 1. Retrouver l'identifiant de la ville (cergy, annecy...)
+                        const zoneId = Object.keys(this.zones).find(z => this.zones[z].name === cityName);
+                        // 2. Récupérer la vraie valeur actuelle de la qualité de l'air (ex: 12 µg/m³)
+                        const basePm25 = zoneId ? (this.getBaseIndicators(zoneId).pm25 || 12) : 12;
+                        
+                        // 3. Créer une tendance logique : 
+                        // SSP2 (Écologique) = -15% en 2030, -30% en 2050, -50% en 2100
+                        // SSP5 (Fossiles) = +10% en 2030, +25% en 2050, +45% en 2100
+                        const trend = scenarioKey === 'SSP2' 
+                            ? [1, 0.85, 0.70, 0.50] 
+                            : [1, 1.10, 1.25, 1.45];
+
+                        return {
+                            labels: yearOrder.map(y => yearLabels[y]),
+                            values: trend.map(m => Number((basePm25 * m).toFixed(2)))
+                        };
+                    }
+
+                    // Si c'est un autre indicateur manquant, on renvoie zéro
+                    return { labels: yearOrder.map(y => yearLabels[y]), values: [0, 0, 0, 0] };
+                }
+
                 const valuesByYear = {};
                 data.forEach(row => {
                     const raw = typeof row.value === 'string' ? row.value.replace(',', '.') : row.value;
@@ -1863,10 +1992,10 @@ class ClimatQuartierApp {
                     syncValue(inputId, valueId, suffix);
                 };
 
-                onInput('treesInput', 'treesValue', 'nbArbres', '');
+				onInput('treesInput', 'treesValue', 'nbArbres', '');
                 onInput('evInput', 'evValue', 'deltaEVpct', '%');
                 onInput('densityInput', 'densityValue', 'deltaDensitePct', '%');
-                onInput('permInput', 'permValue', 'pctPerm', '%');
+                onInput('traficInput', 'traficValue', 'baisseTraficPct', '%'); // <-- MODIFIÉ
 
                 const cached = this.actions;
                 const setInput = (id, value, suffix = '') => {
@@ -1878,7 +2007,7 @@ class ClimatQuartierApp {
                 setInput('treesInput', cached.nbArbres);
                 setInput('evInput', cached.deltaEVpct, '%');
                 setInput('densityInput', cached.deltaDensitePct, '%');
-                setInput('permInput', cached.pctPerm, '%');
+                setInput('traficInput', cached.baisseTraficPct, '%'); // <-- MODIFIÉ
             }
 
             resetActions() {
@@ -1888,12 +2017,12 @@ class ClimatQuartierApp {
                     if (input) input.value = value;
                     if (valueEl) valueEl.textContent = `${value}${suffix}`;
                 };
-                this.actions = { nbArbres: 0, deltaEVpct: 0, deltaDensitePct: 0, pctPerm: 0 };
+                this.actions = { nbArbres: 0, deltaEVpct: 0, deltaDensitePct: 0, baisseTraficPct: 0 };
                 this.saveActionsToCache();
                 setInput('treesInput', 0);
                 setInput('evInput', 0, '%');
                 setInput('densityInput', 0, '%');
-                setInput('permInput', 0, '%');
+                setInput('traficInput', 0, '%');
                 this.renderGreenSpacesLayers();
             }
 
@@ -1913,7 +2042,7 @@ class ClimatQuartierApp {
                         nbArbres: Number(parsed.nbArbres) || 0,
                         deltaEVpct: Number(parsed.deltaEVpct) || 0,
                         deltaDensitePct: Number(parsed.deltaDensitePct) || 0,
-                        pctPerm: Number(parsed.pctPerm) || 0
+                        baisseTraficPct: Number(parsed.baisseTraficPct) || 0
                     };
                 } catch {}
             }
@@ -1949,7 +2078,8 @@ class ClimatQuartierApp {
                     heatwave: base.heatwave,
                     precipitation: base.precipitation,
                     icu: base.icu,
-                    vegetation: base.vegetation
+                    vegetation: base.vegetation,
+					pm25: base.pm25
                 };
             }
 
@@ -1961,7 +2091,8 @@ class ClimatQuartierApp {
                     heatwave: base.heatwave,
                     precipitation: base.precipitation,
                     icu: sim.icu,
-                    vegetation: Number.isFinite(sim.vegetation) ? sim.vegetation : base.vegetation
+                    vegetation: Number.isFinite(sim.vegetation) ? sim.vegetation : base.vegetation,
+					pm25: sim.pm25
                 };
             }
 

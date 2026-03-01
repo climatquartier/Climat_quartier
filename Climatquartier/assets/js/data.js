@@ -5,7 +5,7 @@ window.CLIMAT_QUARTIER_CONFIG = {
             region: "Île-de-France",
             center: [49.0379, 2.0693],
             bounds: [[49.017, 2.03], [49.058, 2.11]],
-            color: '#2ecc71',
+            color: '#8b5cf6',
             description: 'Cergy est une ville nouvelle dynamique, pôle économique et universitaire important.',
             population: '66,401',
             superficie: '11.68 km²',
@@ -102,7 +102,7 @@ window.CLIMAT_QUARTIER_CONFIG = {
     },
     communesConfig: {
         annecy: { path: 'Annecy/Annecy.shp', color: '#e74c3c' },
-        cergy: { path: 'Cergy/Cergy.shp', color: '#2ecc71' },
+        cergy: { path: 'Cergy/Cergy.shp', color: '#8b5cf6' },
         saintmalo: { path: 'Saint-Malo/Saint-Malo.shp', color: '#3498db' }
     }
 };
