@@ -10,6 +10,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
     
     <link rel="stylesheet" href="./assets/css/main.css" />
 
@@ -491,6 +492,32 @@
 							<div class="indicator-value">
 								<div class="value-main">--</div>
 								<div class="value-change">Données actuelles</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="indicator-card" id="inonde-indicator" style="display: none;">
+						<div class="indicator-header">
+							<div class="indicator-icon" style="color: #ca8a04; background: rgba(250, 204, 21, 0.15);">
+								<i class="fas fa-house-damage"></i>
+							</div>
+							<div class="indicator-info">
+								<div class="indicator-title-row">
+									<div class="indicator-name">Bâtiments exposés</div>
+									<div class="meta-icon">
+										<i class="fas fa-info-circle"></i>
+										<div class="meta-tooltip">
+											<strong>Analyse spatiale :</strong> Turf.js
+											<br>
+											<strong>Info :</strong> Nombre de bâtiments intersectant une zone à risque d'inondation.
+										</div>
+									</div>
+								</div>
+								<div class="indicator-desc">Risque d'inondation</div>
+							</div>
+							<div class="indicator-value">
+								<div class="value-main" id="inondes-count-val">0</div>
+								<div class="value-change">Bâtiments</div>
 							</div>
 						</div>
 					</div>

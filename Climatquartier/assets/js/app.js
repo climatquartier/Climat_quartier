@@ -226,6 +226,7 @@ class ClimatQuartierApp {
         this.inondationLayerActive = false;
         this.inondationLayers = {};
         this.inondationGeoJSON = {};
+        this.batiInondesCache = {}; 
         this.idVilleMap = {
             annecy: 1,
             cergy: 2,
@@ -889,29 +890,83 @@ class ClimatQuartierApp {
                 }
                 this.updateLegend();
             }
+			
+			calculateBatiInondes(zoneId) {
+                // Si déjà calculé en mémoire, on retourne le résultat instantanément !
+                if (this.batiInondesCache[zoneId] !== undefined) return this.batiInondesCache[zoneId];
+                
+                const batiData = this.batiGeoJSON[zoneId];
+                const inondData = this.inondationGeoJSON[zoneId];
+                if (!batiData || !inondData || typeof turf === 'undefined') return 0;
+
+                console.log(`🌍 Analyse spatiale en cours pour ${zoneId}...`);
+                let count = 0;
+                
+                // Optimisation extrême : on précalcule les "boîtes carrées" autour des zones inondables
+                const inondBboxes = inondData.features.map(f => ({ feature: f, bbox: turf.bbox(f) }));
+
+                batiData.features.forEach(bati => {
+                    bati.properties.inonde = false;
+                    const bBbox = turf.bbox(bati);
+
+                    for (const inond of inondBboxes) {
+                        // 1. Vérification ultra-rapide si les boîtes se croisent grossièrement
+                        if (bBbox[0] > inond.bbox[2] || bBbox[2] < inond.bbox[0] || bBbox[1] > inond.bbox[3] || bBbox[3] < inond.bbox[1]) {
+                            continue; // Ne se touchent pas, on passe au suivant
+                        }
+                        
+                        // 2. Vérification géométrique de précision au mètre près (Turf.js)
+                        if (turf.booleanIntersects(bati, inond.feature)) {
+                            bati.properties.inonde = true;
+                            count++;
+                            break; // Ce bâtiment est inondé, pas besoin de tester les autres zones
+                        }
+                    }
+                });
+
+                this.batiInondesCache[zoneId] = count;
+                return count;
+            }
             
 
-            renderBatiLayers() {
-                if (!this.batiLayerActive) return;
-                
+			renderBatiLayers() {
                 Object.keys(this.zones).forEach(zoneId => {
                     const raw = this.batiGeoJSON[zoneId];
                     if (!raw) return;
-                    
-                    if (this.batiLayers[zoneId]) {
-                        this.map.removeLayer(this.batiLayers[zoneId]);
+                    if (this.batiLayers[zoneId]) this.map.removeLayer(this.batiLayers[zoneId]);
+
+                    const showInonde = this.inondationLayerActive;
+                    let count = 0;
+
+                    if (showInonde) {
+                        count = this.calculateBatiInondes(zoneId);
                     }
-                    
-                    const layer = L.geoJSON(raw, {
-                        style: {
-                            color: '#475569', // Bordure gris foncé
-                            weight: 1,
-                            fillColor: '#94a3b8', // Remplissage gris clair
-                            fillOpacity: 0.8
+
+                    this.batiLayers[zoneId] = L.geoJSON(raw, {
+                        style: (feature) => {
+                            const isInonde = showInonde && feature.properties.inonde;
+                            return {
+                                color: isInonde ? '#ca8a04' : '#64748b',   // Bordure Jaune foncé si inondé
+                                weight: isInonde ? 2 : 1,
+                                fillColor: isInonde ? '#facc15' : '#94a3b8', // Intérieur Jaune vif si inondé
+                                fillOpacity: isInonde ? 0.8 : 0.6
+                            };
                         }
                     }).addTo(this.map);
                     
-                    this.batiLayers[zoneId] = layer;
+                    // Mise à jour de la nouvelle carte indicateur !
+                    if (zoneId === this.currentZone) {
+                        const indicatorEl = document.getElementById('inonde-indicator');
+                        const valEl = document.getElementById('inondes-count-val');
+                        if (indicatorEl && valEl) {
+                            if (showInonde && this.batiLayerActive) {
+                                valEl.textContent = count;
+                                indicatorEl.style.display = 'block';
+                            } else {
+                                indicatorEl.style.display = 'none';
+                            }
+                        }
+                    }
                 });
             }
 			
@@ -937,13 +992,22 @@ class ClimatQuartierApp {
                 });
             }
 
-            toggleInondationLayer() {
+			toggleInondationLayer() {
                 const clickedBtn = window.event ? window.event.target.closest('.toggle-btn') : null;
                 this.inondationLayerActive = !this.inondationLayerActive;
                 if (clickedBtn) clickedBtn.classList.toggle('active', this.inondationLayerActive);
                 
                 if (this.inondationLayerActive) this.renderInondationLayers();
                 else Object.values(this.inondationLayers).forEach(l => { if (l) this.map.removeLayer(l); });
+                
+                if (this.batiLayerActive) {
+                    this.renderBatiLayers();
+                } else {
+                    // Masquer la NOUVELLE CARTE si le bâti n'est pas affiché
+                    const indicatorEl = document.getElementById('inonde-indicator');
+                    if (indicatorEl) indicatorEl.style.display = 'none';
+                }
+
                 this.updateLegend();
             }
 
