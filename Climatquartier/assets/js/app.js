@@ -400,10 +400,7 @@ class ClimatQuartierApp {
 			async initializeSupabaseData() {
                 if (!this.supabase) return;
 
-                console.log("🚀 Démarrage du chargement ultra-rapide en parallèle...");
-
-                // MAGIE N°1 : Promise.all permet de télécharger Cergy, Annecy et Saint-Malo EN MÊME TEMPS !
-                await Promise.all(Object.keys(this.zones).map(async (zoneId) => {
+				for (const zoneId of Object.keys(this.zones)) {
                     const zone = this.zones[zoneId];
                     const commune = await this.fetchCommuneByName(zone.name);
                     
@@ -416,11 +413,16 @@ class ClimatQuartierApp {
                             name: commune.nom || zone.name,
                             id_ville: commune.id_ville
                         });
+					} else {
+                        zone.id_ville = this.idVilleMap[zoneId] || zone.id_ville;
                     }
 
                     const baseIndicators = await this.fetchBaseIndicatorsForZone(zoneId);
                     this.baseIndicators[zoneId] = baseIndicators;
-                    this.baseIndicatorsMeta[zoneId] = { scenario: this.currentScenario, horizon: this.currentHorizon };
+					this.baseIndicatorsMeta[zoneId] = {
+                        scenario: this.currentScenario,
+                        horizon: this.currentHorizon
+                    };
 
                     zone.current = {
                         temp: baseIndicators.temperature,
@@ -431,24 +433,18 @@ class ClimatQuartierApp {
                         pm25: baseIndicators.pm25
                     };
 
-                    if (zone.id_ville) {
-                        // MAGIE N°2 : On a retiré le mot "await". 
-                        // Le code n'attend plus que la végétation soit téléchargée pour afficher la carte !
-                        
-                        // 1. Végétation en arrière-plan
-                        this.fetchGreenSpaces(zone.id_ville).then(greens => {
-                            if (greens) {
-                                this.greenSpacesGeoJSON[zoneId] = greens;
-                                this.updateZoneBoundsFromVegetation(zoneId, greens);
-                                if (this.greenSpacesLayerActive && this.map) this.renderGreenSpacesLayers();
-                            }
-                        });
+					if (zone.id_ville) {
+                        const greens = await this.fetchGreenSpaces(zone.id_ville);
+                        if (greens) {
+                            this.greenSpacesGeoJSON[zoneId] = greens;
+                            this.updateZoneBoundsFromVegetation(zoneId, greens);
+                        }
                         
                         // 2. Bâti en arrière-plan
                         this.fetchBati(zone.id_ville).then(bati => {
                             if (bati) {
                                 this.batiGeoJSON[zoneId] = bati;
-                                if (this.batiLayerActive && this.map) this.renderBatiLayers();
+                                if (this.batiLayerActive) this.renderBatiLayers();
                             }
                         });
 
@@ -456,7 +452,7 @@ class ClimatQuartierApp {
                         this.fetchHydro(zone.id_ville).then(hydro => {
                             if (hydro) {
                                 this.hydroGeoJSON[zoneId] = hydro;
-                                if (this.hydroLayerActive && this.map) this.renderHydroLayers();
+                                if (this.hydroLayerActive) this.renderHydroLayers();
                             }
                         });
 
@@ -464,14 +460,16 @@ class ClimatQuartierApp {
                         this.fetchInondations(zone.id_ville).then(inond => {
                             if (inond) {
                                 this.inondationGeoJSON[zoneId] = inond;
-                                if (this.inondationLayerActive && this.map) this.renderInondationLayers();
+                                if (this.inondationLayerActive) this.renderInondationLayers();
                             }
                         });
                     }
-                }));
-
-                console.log("✅ Interface prête, les données lourdes arrivent en fond...");
-            }
+                }
+				
+				if (this.map && this.greenSpacesLayerActive) {
+                    this.renderGreenSpacesLayers();
+                }
+			}
 
 			async fetchCommuneByName(name) {
                 try {
