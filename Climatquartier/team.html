@@ -6,6 +6,127 @@
     <title>ClimatQuartier • Équipe</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./assets/css/main.css" />
+    <style>
+		/* Styles spécifiques pour imiter parfaitement la page Contact */
+        .page-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+        .unified-card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            /* Marges internes légèrement réduites en hauteur */
+            padding: 2.5rem 3rem; 
+            /* CARTE PLUS LARGE : 1100px au lieu de 800px */
+            max-width: 1100px; 
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .unified-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .unified-header h2 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .unified-header p {
+            color: #64748b;
+            margin: 0;
+            font-size: 1.05rem;
+        }
+        .team-grid-unified {
+            display: grid;
+            /* Permet de placer les 5 membres sur la même ligne sur grand écran */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem; /* Espacement réduit */
+            margin-bottom: 2rem;
+        }
+        .team-member-clean {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .avatar-clean {
+            font-size: 2.2rem; /* Avatar très légèrement réduit */
+            background: #f1f5f9;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+        }
+        .team-member-clean h4 {
+            margin: 0 0 0.25rem 0;
+            color: #0f172a;
+            font-size: 1.05rem;
+        }
+        .team-member-clean p {
+            margin: 0 0 0.5rem 0;
+            font-weight: 600;
+            color: #1A6153; 
+            font-size: 0.85rem;
+        }
+        .team-member-clean small {
+            color: #64748b;
+            line-height: 1.3;
+            font-size: 0.8rem;
+        }
+        .team-actions-unified {
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .team-actions-unified .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #1A6153;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .team-actions-unified .nav-btn:hover {
+            background: #134e42;
+            transform: translateY(-2px);
+        }
+
+        /* Support du Mode Sombre */
+        [data-theme="dark"] .unified-card {
+            background-color: #1e293b;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        [data-theme="dark"] .unified-header {
+            border-color: #334155;
+        }
+        [data-theme="dark"] .team-actions-unified {
+            border-color: #334155;
+        }
+        [data-theme="dark"] .unified-header h2,
+        [data-theme="dark"] .team-member-clean h4 {
+            color: #f8fafc;
+        }
+        [data-theme="dark"] .unified-header p,
+        [data-theme="dark"] .team-member-clean small {
+            color: #94a3b8;
+        }
+        [data-theme="dark"] .avatar-clean {
+            background: #334155;
+        }
+        [data-theme="dark"] .team-member-clean p {
+            color: #34d399;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -35,48 +156,48 @@
             </div>
         </header>
 
-        <main class="team-page">
-            <section class="team-card">
-                <div class="team-header">
-                    <h2>Des profils complémentaires</h2>
+        <main class="page-wrapper">
+            <section class="unified-card">
+                <div class="unified-header">
+                    <h2>Notre Équipe</h2>
                     <p>Recherche, data, urbanisme et communication pour des territoires résilients.</p>
                 </div>
 
-                <div class="team-grid">
-                    <div class="team-member">
-                        <div class="member-avatar">👨‍🔬</div>
+                <div class="team-grid-unified">
+                    <div class="team-member-clean">
+                        <div class="avatar-clean">👨‍🔬</div>
                         <h4>Tya Rambault De BARALLON</h4>
                         <p>Chargé de projet</p>
                         <small>15 ans d'expérience en modélisation climatique</small>
                     </div>
-                    <div class="team-member">
-                        <div class="member-avatar">👩‍💻</div>
+                    <div class="team-member-clean">
+                        <div class="avatar-clean">👩‍💻</div>
                         <h4>Ambroise DANGUY</h4>
                         <p>Chargé de projet</p>
                         <small>Expert en visualisation de données environnementales</small>
                     </div>
-                    <div class="team-member">
-                        <div class="member-avatar">👨‍🏫</div>
+                    <div class="team-member-clean">
+                        <div class="avatar-clean">👨‍🏫</div>
                         <h4>Doriane Martins RIBEIRO</h4>
                         <p>Chargée de projet</p>
                         <small>Spécialiste en communication scientifique</small>
                     </div>
-                    <div class="team-member">
-                        <div class="member-avatar">👨‍🏫</div>
+                    <div class="team-member-clean">
+                        <div class="avatar-clean">👨‍🏫</div>
                         <h4>Lucas DEVANCOURT</h4>
-                        <p>Chargée de projet</p>
+                        <p>Chargé de projet</p>
                         <small>Spécialiste en communication scientifique</small>
                     </div>
-                    <div class="team-member">
-                        <div class="member-avatar">👨‍🏫</div>
+                    <div class="team-member-clean">
+                        <div class="avatar-clean">👨‍🏫</div>
                         <h4>Gloire MBAMBA</h4>
                         <p>Chargé de projet</p>
                         <small>Création d'interfaces utilisateur intuitives</small>
                     </div>
                 </div>
 
-                <div class="team-actions">
-                    <a class="nav-btn ghost" href="contact.html">
+                <div class="team-actions-unified">
+                    <a class="nav-btn" href="contact.html">
                         <i class="fas fa-paper-plane"></i> Nous contacter
                     </a>
                 </div>
