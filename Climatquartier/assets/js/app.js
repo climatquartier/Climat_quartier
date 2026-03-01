@@ -220,6 +220,12 @@ class ClimatQuartierApp {
 		this.batiLayerActive = false;
         this.batiLayers = {};
         this.batiGeoJSON = {};
+		this.hydroLayerActive = false;
+        this.hydroLayers = {};
+        this.hydroGeoJSON = {};
+        this.inondationLayerActive = false;
+        this.inondationLayers = {};
+        this.inondationGeoJSON = {};
         this.idVilleMap = {
             annecy: 1,
             cergy: 2,
@@ -426,18 +432,34 @@ class ClimatQuartierApp {
                         vegetation: baseIndicators.vegetation
                     };
 
-                    if (zone.id_ville) {
+					if (zone.id_ville) {
                         const greens = await this.fetchGreenSpaces(zone.id_ville);
                         if (greens) {
                             this.greenSpacesGeoJSON[zoneId] = greens;
                             this.updateZoneBoundsFromVegetation(zoneId, greens);
                         }
-						
-						this.fetchBati(zone.id_ville).then(bati => {
+                        
+                        // Chargement asynchrone du Bâti
+                        this.fetchBati(zone.id_ville).then(bati => {
                             if (bati) {
                                 this.batiGeoJSON[zoneId] = bati;
-                                // Si l'utilisateur avait déjà cliqué sur le bouton Bâti pendant le chargement, on l'affiche
                                 if (this.batiLayerActive) this.renderBatiLayers();
+                            }
+                        });
+
+                        // Chargement asynchrone de l'Eau
+                        this.fetchHydro(zone.id_ville).then(hydro => {
+                            if (hydro) {
+                                this.hydroGeoJSON[zoneId] = hydro;
+                                if (this.hydroLayerActive) this.renderHydroLayers();
+                            }
+                        });
+
+                        // Chargement asynchrone des Inondations
+                        this.fetchInondations(zone.id_ville).then(inond => {
+                            if (inond) {
+                                this.inondationGeoJSON[zoneId] = inond;
+                                if (this.inondationLayerActive) this.renderInondationLayers();
                             }
                         });
                     }
@@ -499,6 +521,44 @@ class ClimatQuartierApp {
                     pm25: pm25 ?? fallback.pm25,
                     vegetation: vegetation ?? fallback.vegetation
                 };
+            }
+			
+			async fetchHydro(idVille) {
+                try {
+                    if (!this.supabase) return null;
+                    const { data, error } = await this.supabase
+                        .schema('appsig')
+                        .from('surface_hydro_geojson')
+                        .select('geom_geojson')
+                        .eq('id_ville', idVille)
+                        .limit(5000);
+
+                    if (error || !data?.length) return null;
+                    const features = data.map(row => {
+                        const geom = this.normalizeGeoJSON(row.geom_geojson);
+                        return geom?.type === 'FeatureCollection' ? geom.features : [];
+                    }).flat().filter(Boolean);
+                    return features.length ? { type: 'FeatureCollection', features } : null;
+                } catch (err) { return null; }
+            }
+
+            async fetchInondations(idVille) {
+                try {
+                    if (!this.supabase) return null;
+                    const { data, error } = await this.supabase
+                        .schema('appsig')
+                        .from('risques_inondation_geojson')
+                        .select('geom_geojson')
+                        .eq('id_ville', idVille)
+                        .limit(5000);
+
+                    if (error || !data?.length) return null;
+                    const features = data.map(row => {
+                        const geom = this.normalizeGeoJSON(row.geom_geojson);
+                        return geom?.type === 'FeatureCollection' ? geom.features : [];
+                    }).flat().filter(Boolean);
+                    return features.length ? { type: 'FeatureCollection', features } : null;
+                } catch (err) { return null; }
             }
 
             async refreshBaseIndicators() {
@@ -852,6 +912,51 @@ class ClimatQuartierApp {
                     }).addTo(this.map);
                     
                     this.batiLayers[zoneId] = layer;
+                });
+            }
+			
+			toggleHydroLayer() {
+                const clickedBtn = window.event ? window.event.target.closest('.toggle-btn') : null;
+                this.hydroLayerActive = !this.hydroLayerActive;
+                if (clickedBtn) clickedBtn.classList.toggle('active', this.hydroLayerActive);
+                
+                if (this.hydroLayerActive) this.renderHydroLayers();
+                else Object.values(this.hydroLayers).forEach(l => { if (l) this.map.removeLayer(l); });
+                this.updateLegend();
+            }
+
+            renderHydroLayers() {
+                Object.keys(this.zones).forEach(zoneId => {
+                    const raw = this.hydroGeoJSON[zoneId];
+                    if (!raw) return;
+                    if (this.hydroLayers[zoneId]) this.map.removeLayer(this.hydroLayers[zoneId]);
+                    
+                    this.hydroLayers[zoneId] = L.geoJSON(raw, {
+                        style: { color: '#0284c7', weight: 1, fillColor: '#38bdf8', fillOpacity: 0.7 }
+                    }).addTo(this.map);
+                });
+            }
+
+            toggleInondationLayer() {
+                const clickedBtn = window.event ? window.event.target.closest('.toggle-btn') : null;
+                this.inondationLayerActive = !this.inondationLayerActive;
+                if (clickedBtn) clickedBtn.classList.toggle('active', this.inondationLayerActive);
+                
+                if (this.inondationLayerActive) this.renderInondationLayers();
+                else Object.values(this.inondationLayers).forEach(l => { if (l) this.map.removeLayer(l); });
+                this.updateLegend();
+            }
+
+            renderInondationLayers() {
+                Object.keys(this.zones).forEach(zoneId => {
+                    const raw = this.inondationGeoJSON[zoneId];
+                    if (!raw) return;
+                    if (this.inondationLayers[zoneId]) this.map.removeLayer(this.inondationLayers[zoneId]);
+                    
+                    this.inondationLayers[zoneId] = L.geoJSON(raw, {
+                        // Bordure en pointillés rouges et remplissage rouge léger
+                        style: { color: '#dc2626', weight: 2, dashArray: '5, 5', fillColor: '#ef4444', fillOpacity: 0.3 }
+                    }).addTo(this.map);
                 });
             }
 
@@ -1458,6 +1563,21 @@ class ClimatQuartierApp {
                             <span>Zones imperméables</span>
                         </div>
                     `;
+                }
+				
+				if (this.hydroLayerActive) {
+                    content += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #38bdf8; border: 1px solid #0284c7;"></div>
+                            <span>Réseau hydrographique</span>
+                        </div>`;
+                }
+                if (this.inondationLayerActive) {
+                    content += `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: rgba(239, 68, 68, 0.3); border: 2px dashed #dc2626;"></div>
+                            <span>Zones inondables</span>
+                        </div>`;
                 }
 
                 legendContainer.innerHTML = content;

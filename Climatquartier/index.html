@@ -259,6 +259,24 @@
                         </div>
                     </div>
 					
+					<div class="collapsible-section">
+                        <div class="section-header" onclick="toggleSection(this)">
+                            <i class="fas fa-chevron-down chevron-icon"></i>
+                            <i class="fas fa-water"></i>
+                            <span>Eau et Risques</span>
+                        </div>
+                        <div class="section-content active">
+                            <div class="layer-toggle" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div id="btn-toggle-hydro" class="toggle-btn" onclick="app.toggleHydroLayer()">
+                                    💧 Réseau hydrographique
+                                </div>
+                                <div id="btn-toggle-inondation" class="toggle-btn" onclick="app.toggleInondationLayer()">
+                                    ⚠️ Zones inondables
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+					
                     
                     <!-- Section Fond de carte (dépliable) -->
                     <div class="collapsible-section">
