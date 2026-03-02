@@ -1,0 +1,166 @@
+{
+  "Annecy": {
+    "SSP5": {
+      "2030": {
+        "icu_intensity": 1.9,
+        "Jours de canicule": 11.0,
+        "Précipitation": 1289.0,
+        "Température moyenne": 13.1,
+        "vegetalisation": 41.0
+      },
+      "2050": {
+        "icu_intensity": 2.7,
+        "Jours de canicule": 23.0,
+        "Précipitation": 1283.0,
+        "vegetalisation": 37.0
+      },
+      "2100": {
+        "icu_intensity": 3.7,
+        "Jours de canicule": 38.0,
+        "Précipitation": 1263.0,
+        "vegetalisation": 33.0
+      },
+      "Actuel": {
+        "icu_intensity": 1.2,
+        "Jours de canicule": 5.0,
+        "Précipitation": 1223.0,
+        "vegetalisation": 45.0
+      }
+    },
+    "SSP2": {
+      "2030": {
+        "Jours de canicule": 11.0,
+        "Précipitation": 1140.0,
+        "Température moyenne": 11.321095890411
+      },
+      "2050": {
+        "Jours de canicule": 16.0,
+        "Précipitation": 1080.0,
+        "Température moyenne": 14.7
+      },
+      "2100": {
+        "Jours de canicule": 29.0,
+        "Précipitation": 1020.0,
+        "Température moyenne": 16.0
+      },
+      "Actuel": {
+        "Jours de canicule": 2.0,
+        "Précipitation": 1200.0,
+        "Température moyenne": 11.5
+      }
+    }
+  },
+  "Cergy": {
+    "SSP5": {
+      "2030": {
+        "icu_intensity": 2.2,
+        "Jours de canicule": 16.0,
+        "Précipitation": 677.0,
+        "Température moyenne": 15.2,
+        "vegetalisation": 26.0
+      },
+      "2050": {
+        "icu_intensity": 3.0,
+        "Jours de canicule": 30.0,
+        "Précipitation": 680.0,
+        "Température moyenne": 13.4378082191781,
+        "vegetalisation": 22.0
+      },
+      "2100": {
+        "icu_intensity": 4.0,
+        "Jours de canicule": 45.0,
+        "Précipitation": 666.0,
+        "Température moyenne": 18.1,
+        "vegetalisation": 18.0
+      },
+      "Actuel": {
+        "icu_intensity": 1.5,
+        "Jours de canicule": 8.0,
+        "Précipitation": 700.0,
+        "vegetalisation": 30.0
+      }
+    },
+    "SSP2": {
+      "2030": {
+        "Jours de canicule": 6.0,
+        "Précipitation": 665.0,
+        "Température moyenne": 12.7375342465753
+      },
+      "2050": {
+        "Jours de canicule": 11.0,
+        "Précipitation": 630.0,
+        "Température moyenne": 16.8
+      },
+      "2100": {
+        "Jours de canicule": 19.0,
+        "Précipitation": 595.0,
+        "Température moyenne": 14.6641095890411
+      },
+      "Actuel": {
+        "Jours de canicule": 1.0,
+        "Précipitation": 652.0,
+        "Température moyenne": 13.8
+      }
+    }
+  },
+  "Saint-Malo": {
+    "SSP5": {
+      "2030": {
+        "icu_intensity": 1.5,
+        "Jours de canicule": 8.0,
+        "vegetalisation": 24.0
+      },
+      "2050": {
+        "icu_intensity": 2.3,
+        "Jours de canicule": 20.0,
+        "Température moyenne": 15.4,
+        "vegetalisation": 20.0
+      },
+      "2100": {
+        "icu_intensity": 3.3,
+        "Jours de canicule": 35.0,
+        "Précipitation": 753.0,
+        "Température moyenne": 16.7,
+        "vegetalisation": 16.0
+      },
+      "Actuel": {
+        "icu_intensity": 0.8,
+        "Jours de canicule": 3.0,
+        "Précipitation": 750.0,
+        "Température moyenne": 12.2,
+        "vegetalisation": 28.0
+      }
+    },
+    "SSP2": {
+      "2030": {
+        "Jours de canicule": 2.0,
+        "Précipitation": 712.0,
+        "Température moyenne": 13.8
+      },
+      "2050": {
+        "Jours de canicule": 4.0,
+        "Précipitation": 674.0,
+        "Température moyenne": 13.3769863013699
+      },
+      "2100": {
+        "Jours de canicule": 7.0,
+        "Précipitation": 636.0,
+        "Température moyenne": 14.4769863013699
+      },
+      "Actuel": {
+        "Jours de canicule": 0.0,
+        "Précipitation": 734.0,
+        "Température moyenne": 11.6013698630137
+      }
+    },
+    "TRACC": {
+      "2030": {
+        "Précipitation": 762.0,
+        "Température moyenne": 12.7260273972603
+      },
+      "2050": {
+        "Précipitation": 760.0
+      }
+    }
+  }
+}
